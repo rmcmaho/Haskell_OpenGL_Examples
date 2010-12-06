@@ -17,16 +17,11 @@ display = do
 	--rotate 45.0 $ Vector3 1.0 0.0 (0.0::GLfloat)
 	
 	preservingMatrix $ do
-		--scale 1.9 1.9 (1.0::GLfloat)
-		--translate $ Vector3 (-0.5) (-0.5) (0.0::GLfloat)
-		--rotate (-90.0) $ Vector3 0.0 1.0 (0::GLfloat)
+		scale 1.9 1.9 (1.0::GLfloat)
+		translate $ Vector3 (-0.5) (-0.5) (0.0::GLfloat)
+		rotate (-90.0) $ Vector3 1.0 0.0 (0::GLfloat)
 		drawPlane
-	preservingMatrix $ do
-            renderPrimitive Quads $ do
-            vertex $ Vertex3 (-0.5) 0.5 ((-0.5)::GLfloat)
-            vertex $ Vertex3 (-0.5) (-0.5) ((-0.5)::GLfloat)
-            vertex $ Vertex3 0.5 (-0.5) ((-0.5)::GLfloat)
-            vertex $ Vertex3 0.5 0.5 ((-0.5)::GLfloat);
+
 {-
 	preservingMatrix $ do
 		renderPrimitive Quads $ do
@@ -83,12 +78,20 @@ initfn = do
 	matrixMode $= Modelview 0
 	
 	--translate $ Vector3 0.0 0.0 ((-3.0)::GLfloat)
-	--rotate 45.0 $ Vector3 1.0 0.0 (0.0::GLfloat)
+	rotate 45.0 $ Vector3 1.0 0.0 (0.0::GLfloat)
 	
 	lighting $= Enabled
 	normalize $= Enabled
 
-	initLights
+	lightModelAmbient $= modelAmb
+	lightModelLocalViewer  $= Enabled
+	lightModelTwoSide  $= Disabled
+	
+	materialAmbient Front $= matAmb
+	materialDiffuse Front $= matDiff
+	materialSpecular Front $= matSpec
+	materialEmission Front $= matEmission
+	materialShininess Front $= 10.0
 	--light (Light 0) $= Enabled
 	--ambient (Light 0) $= lightAmbient
 	
@@ -96,5 +99,12 @@ initfn = do
 	--position (Light 0) $= Vertex4 0.0 0.0 0.0 (1.0);
 	--spotDirection (Light 0) $= (Normal3 0.0 (-1.0) 0.0);
 	
-lightAmbient :: Color4 GLfloat
-lightAmbient = Color4 0.2 0.2 0.2 (1.0::GLfloat)
+	initLights
+	
+modelAmb :: Color4 GLfloat
+modelAmb = Color4 0.2 0.2 0.2 (1.0::GLfloat)
+
+matAmb = Color4 0.2 0.2 0.2 (1.0::GLfloat)
+matDiff = Color4 0.8 0.8 0.8 (1.0::GLfloat)
+matSpec = Color4 0.4 0.4 0.4 (1.0::GLfloat)
+matEmission = Color4 0.0 0.0 0.0 (1.0::GLfloat)
