@@ -10,10 +10,23 @@ import Graphics.Rendering.OpenGL
 import Graphics.UI.GLUT
 import Control.Applicative
 
+import LightRec
+
+
+-- useful function
+two_pi = 2*pi
+
+spotLights :: [LightStruct]
+spotLights = [LightStruct {amb=Color4 0.2 0.0 0.0 1.0, diff=Color4 0.8 0.0 0.0 1.0,
+												spec=Color4 0.4 0.0 0.0 1.0, pos=Vertex4 0.4 0.0 0.0 1.0,
+												spotDir=Normal3 0.0 (-1.0) 0.0, spotExp=20.0,
+												cutoff=60.0, atten=(1.0, 0.0, (0.0::GLfloat)),
+												trans=Vertex3 0.0 1.25 0.0, rot=(0.0, 0.0, 0.0),
+												swing=(20.0, 0.0, 40.0), arc=(0.0, 0.0, 0.0),
+												arcIncr=(two_pi / 70.0, 0.0, two_pi / 140.0)}]
 
 display spin = do
 	clear [ColorBuffer,DepthBuffer]
-	--loadIdentity
 	preservingMatrix $ do
 		angle <- get spin
 		rotate angle $ Vector3 0.0 1.0 (0.0::GLfloat)
@@ -22,9 +35,9 @@ display spin = do
 		drawLights
 		
 		preservingMatrix $ do
+			rotate (-90.0) $ Vector3 1.0 0.0 (0::GLfloat)
 			scale 1.9 1.9 (1.0::GLfloat)
 			translate $ Vector3 (-0.5) (-0.5) (0.0::GLfloat)
-			rotate (-90.0) $ Vector3 1.0 0.0 (0::GLfloat)
 			drawPlane 16 16
 		
 		
@@ -59,7 +72,7 @@ drawLights = do
 	lighting $= Disabled	
 	color $ Color3 0.8 0.0 (0.0::GLfloat)	
 	preservingMatrix $ do
-		translate $ Vector3 0.0 0.25 (0.0::GLfloat)
+		translate $ Vector3 0.0 1.25 (0.0::GLfloat)
 		renderPrimitive Lines $ do
 			vertex $ Vertex3 0.0 0.0 (0.0::GLfloat)
 			vertex $ Vertex3 0.0 (-1.0) (0.0::GLfloat)
