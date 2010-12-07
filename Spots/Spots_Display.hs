@@ -16,15 +16,18 @@ import LightRec
 -- useful function
 two_pi = 2*pi
 
+-- list of spotlights
 spotLights :: [LightStruct]
 spotLights = [LightStruct {amb=Color4 0.2 0.0 0.0 1.0, diff=Color4 0.8 0.0 0.0 1.0,
-												spec=Color4 0.4 0.0 0.0 1.0, pos=Vertex4 0.4 0.0 0.0 1.0,
+												spec=Color4 0.4 0.0 0.0 1.0, pos=Vertex4 0.0 0.0 0.0 1.0,
 												spotDir=Normal3 0.0 (-1.0) 0.0, spotExp=20.0,
 												cutoff=60.0, atten=(1.0, 0.0, (0.0::GLfloat)),
-												trans=Vertex3 0.0 1.25 0.0, rot=(0.0, 0.0, 0.0),
+												trans=Vector3 0.0 1.25 0.0, rot=(0.0, 0.0, 0.0),
 												swing=(20.0, 0.0, 40.0), arc=(0.0, 0.0, 0.0),
-												arcIncr=(two_pi / 70.0, 0.0, two_pi / 140.0)}]
+												arcIncr=(two_pi / 70.0, 0.0, two_pi / 140.0),
+												lightNum=0}]
 
+-- display callback function
 display spin = do
 	clear [ColorBuffer,DepthBuffer]
 	preservingMatrix $ do
@@ -39,50 +42,55 @@ display spin = do
 			scale 1.9 1.9 (1.0::GLfloat)
 			translate $ Vector3 (-0.5) (-0.5) (0.0::GLfloat)
 			drawPlane 16 16
-		
-		
-
-{-
-	preservingMatrix $ do
-		renderPrimitive Quads $ do
-			vertex $ Vertex3 (-0.5) 0.5 ((-0.5)::GLfloat)
-			vertex $ Vertex3 (-0.5) (-0.5) ((-0.5)::GLfloat)
-			vertex $ Vertex3 0.5 (-0.5) ((-0.5)::GLfloat)
-			vertex $ Vertex3 0.5 0.5 ((-0.5)::GLfloat);
--}
 	swapBuffers
 	flush
 
+-- init lights
 initLights = do
-	light (Light 0) $= Enabled
-	ambient (Light 0) $= Color4 0.2 0.0 0.0 1.0
-	diffuse (Light 0) $= Color4 0.8 0.0 0.0 1.0
-	specular (Light 0) $= Color4 0.4 0.0 0.0 1.0
-	spotExponent (Light 0) $= 20.0
-	spotCutoff (Light 0) $= 60.0
-	attenuation (Light 0) $= (1.0, 0.0, (0.0::GLfloat))
+	mapM_ initLight spotLights
 
+initLight :: LightStruct -> IO()
+initLight lt = do
+	light (Light $ lightNum lt) $= Enabled
+	ambient (Light $ lightNum lt) $= amb lt
+	diffuse (Light $ lightNum lt) $= diff lt
+	specular (Light $ lightNum lt) $= spec lt
+	spotExponent (Light $ lightNum lt) $= spotExp lt
+	spotCutoff (Light $ lightNum lt) $= cutoff lt
+	attenuation (Light $ lightNum lt) $= atten lt
+
+-- set lights
 setLights = do
-	preservingMatrix $ do
-		translate $ Vector3 0.0 1.25 (0.0::GLfloat)
-		position (Light 0) $= Vertex4 0.0 0.0 0.0 1.0
-		spotDirection (Light 0) $= Normal3 0.0 (-1.0) 0.0
+	mapM_ setLight spotLights
 
-drawLights = do
-	lighting $= Disabled	
-	color $ Color3 0.8 0.0 (0.0::GLfloat)	
+setLight :: LightStruct -> IO()
+setLight lt = do
 	preservingMatrix $ do
-		translate $ Vector3 0.0 1.25 (0.0::GLfloat)
+		translate $ trans lt
+		position (Light $ lightNum lt) $= pos lt
+		spotDirection (Light $ lightNum lt) $= spotDir lt
+
+-- draw lights
+drawLights = do
+	mapM_ drawLight spotLights
+
+drawLight :: LightStruct -> IO()
+drawLight lt = do
+	lighting $= Disabled	
+	color $ diff lt
+	preservingMatrix $ do
+		translate $ trans lt
 		renderPrimitive Lines $ do
-			vertex $ Vertex3 0.0 0.0 (0.0::GLfloat)
-			vertex $ Vertex3 0.0 (-1.0) (0.0::GLfloat)
+			vertex $ normalToVertex (spotDir lt)
+			vertex $ pos lt
 	lighting $= Enabled
-	
+
+normalToVertex :: Normal3 GLfloat -> Vertex3 GLfloat
+normalToVertex (Normal3 x y z) = Vertex3 x y z	
 	
 drawPlane w h = do
 	normal $ Normal3 0.0 0.0 (1.0::GLfloat)
 	mapM_ (\(x,y) -> preservingMatrix $ do
-		--scale 1.9 1.9 (1.0::GLfloat)
 		renderSection (x,y)
 		) $ myPoints w h
 

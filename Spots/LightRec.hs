@@ -14,9 +14,10 @@ data LightStruct = LightStruct { amb :: Color4 GLfloat
 													,spotExp :: GLfloat
 													,cutoff :: GLfloat
 													,atten :: (GLfloat, GLfloat, GLfloat)
-													,trans :: Vertex3 GLfloat
+													,trans :: Vector3 GLfloat
 													,rot :: (GLfloat, GLfloat, GLfloat)
 													,swing :: (GLfloat, GLfloat, GLfloat)
 													,arc :: (GLfloat, GLfloat, GLfloat)
 													,arcIncr :: (GLfloat, GLfloat, GLfloat)
+													,lightNum :: GLsizei
 													}
