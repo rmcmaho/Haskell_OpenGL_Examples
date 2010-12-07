@@ -59,6 +59,15 @@ initLight lt = do
 	spotCutoff (Light $ lightNum lt) $= cutoff lt
 	attenuation (Light $ lightNum lt) $= atten lt
 
+-- aim lights
+{-
+rotateLight lt = swingX * (sin arcX)
+	where
+		(swingX, swingY, swingZ) = swing lt
+		(arcX, arcY, arcZ) = arc lt
+		(arcIncX, arcIncY, arcInZ) = arcIncr lt
+-}
+		
 -- set lights
 setLights = do
 	mapM_ setLight spotLights
