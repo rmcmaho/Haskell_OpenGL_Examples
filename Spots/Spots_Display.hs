@@ -10,17 +10,24 @@ import Graphics.Rendering.OpenGL
 import Graphics.UI.GLUT
 import Control.Applicative
 
-display = do
-	clear [ColorBuffer];
-	--loadIdentity;
-	--translate $ Vector3 0.0 0.0 ((-3.0)::GLfloat)
-	--rotate 45.0 $ Vector3 1.0 0.0 (0.0::GLfloat)
-	
+
+display spin = do
+	clear [ColorBuffer,DepthBuffer]
+	--loadIdentity
 	preservingMatrix $ do
-		scale 1.9 1.9 (1.0::GLfloat)
-		translate $ Vector3 (-0.5) (-0.5) (0.0::GLfloat)
-		rotate (-90.0) $ Vector3 1.0 0.0 (0::GLfloat)
-		drawPlane
+		angle <- get spin
+		rotate angle $ Vector3 0.0 1.0 (0.0::GLfloat)
+		
+		setLights
+		drawLights
+		
+		preservingMatrix $ do
+			scale 1.9 1.9 (1.0::GLfloat)
+			translate $ Vector3 (-0.5) (-0.5) (0.0::GLfloat)
+			rotate (-90.0) $ Vector3 1.0 0.0 (0::GLfloat)
+			drawPlane 16 16
+		
+		
 
 {-
 	preservingMatrix $ do
@@ -37,19 +44,39 @@ initLights = do
 	light (Light 0) $= Enabled
 	ambient (Light 0) $= Color4 0.2 0.0 0.0 1.0
 	diffuse (Light 0) $= Color4 0.8 0.0 0.0 1.0
-  --specular (Light 0) $= Color4 0.4 0.0 0.0 1.0
+	specular (Light 0) $= Color4 0.4 0.0 0.0 1.0
+	spotExponent (Light 0) $= 20.0
+	spotCutoff (Light 0) $= 60.0
+	attenuation (Light 0) $= (1.0, 0.0, (0.0::GLfloat))
+
+setLights = do
+	preservingMatrix $ do
+		translate $ Vector3 0.0 1.25 (0.0::GLfloat)
+		position (Light 0) $= Vertex4 0.0 0.0 0.0 1.0
+		spotDirection (Light 0) $= Normal3 0.0 (-1.0) 0.0
+
+drawLights = do
+	lighting $= Disabled	
+	color $ Color3 0.8 0.0 (0.0::GLfloat)	
+	preservingMatrix $ do
+		translate $ Vector3 0.0 0.25 (0.0::GLfloat)
+		renderPrimitive Lines $ do
+			vertex $ Vertex3 0.0 0.0 (0.0::GLfloat)
+			vertex $ Vertex3 0.0 (-1.0) (0.0::GLfloat)
+	lighting $= Enabled
 	
-drawPlane = do
+	
+drawPlane w h = do
 	normal $ Normal3 0.0 0.0 (1.0::GLfloat)
 	mapM_ (\(x,y) -> preservingMatrix $ do
 		--scale 1.9 1.9 (1.0::GLfloat)
 		renderSection (x,y)
-		) $ myPoints
+		) $ myPoints w h
 
 
 		
-myPoints :: [(GLfloat,GLfloat)]
-myPoints = (,) <$> [0..16] <*> [0..15]
+myPoints :: Float -> Float -> [(GLfloat,GLfloat)]
+myPoints w h = (,) <$> [0..w] <*> [0..(h-1)]
 
 
 renderSection :: (GLfloat,GLfloat) -> IO ()	
@@ -69,15 +96,24 @@ renderSection' (y,x) = do
 
 d = 1.0/16.0
 
-idle = do
+idle spin = do
+	angle <- get spin
+	spin $= (modAngle angle) + 0.5
 	postRedisplay Nothing
 
+modAngle a
+    | a > 360.0 = (-360.0)
+    | a < (-360.0) = 360.0
+    | otherwise = a	
+	
 initfn = do
+	depthFunc $= Just Less
+
 	matrixMode $= Projection
-	--frustum (-1) 1 (-1) 1 2 (6::GLdouble) --glFrustum
+	frustum (-1) 1 (-1) 1 2 (6::GLdouble) --glFrustum
 	matrixMode $= Modelview 0
 	
-	--translate $ Vector3 0.0 0.0 ((-3.0)::GLfloat)
+	translate $ Vector3 0.0 0.0 ((-3.0)::GLfloat)
 	rotate 45.0 $ Vector3 1.0 0.0 (0.0::GLfloat)
 	
 	lighting $= Enabled
@@ -92,12 +128,6 @@ initfn = do
 	materialSpecular Front $= matSpec
 	materialEmission Front $= matEmission
 	materialShininess Front $= 10.0
-	--light (Light 0) $= Enabled
-	--ambient (Light 0) $= lightAmbient
-	
-	--depthFunc $= Just Less
-	--position (Light 0) $= Vertex4 0.0 0.0 0.0 (1.0);
-	--spotDirection (Light 0) $= (Normal3 0.0 (-1.0) 0.0);
 	
 	initLights
 	

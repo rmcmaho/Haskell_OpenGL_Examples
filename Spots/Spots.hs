@@ -8,15 +8,19 @@ main
 import Graphics.Rendering.OpenGL
 import Graphics.UI.GLUT
 
+import Data.IORef
+
 import Spots_Display
 
 main = do
 	(progname,_) <- getArgsAndInitialize
-	initialDisplayMode $= [DoubleBuffered, RGBMode]
+	initialDisplayMode $= [DoubleBuffered, RGBMode, WithDepthBuffer]
 	createWindow "GLUT spotlight swing"
 	
-	displayCallback $= (display)
-	idleCallback $= Just (idle)
+	spin <- newIORef (0.0::GLfloat)
+	
+	displayCallback $= (display spin)
+	idleCallback $= Just (idle spin)
 	
 	initfn
 	
