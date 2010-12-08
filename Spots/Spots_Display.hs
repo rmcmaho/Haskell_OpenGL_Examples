@@ -25,7 +25,23 @@ spotLights = [LightStruct {amb=Color4 0.2 0.0 0.0 1.0, diff=Color4 0.8 0.0 0.0 1
 												trans=Vector3 0.0 1.25 0.0, rot=(0.0, 0.0, 0.0),
 												swing=(20.0, 0.0, 40.0), arc=(0.0, 0.0, 0.0),
 												arcIncr=(two_pi / 70.0, 0.0, two_pi / 140.0),
-												lightNum=0}]
+												lightNum=0},
+							LightStruct {amb=Color4 0.0 0.2 0.0 1.0, diff=Color4 0.0 0.8 0.0 1.0,
+												spec=Color4 0.0 0.4 0.0 1.0, pos=Vertex4 0.0 0.0 0.0 1.0,
+												spotDir=Normal3 0.0 (-1.0) 0.0, spotExp=20.0,
+												cutoff=60.0, atten=(1.0, 0.0, (0.0::GLfloat)),
+												trans=Vector3 0.0 1.25 0.0, rot=(0.0, 0.0, 0.0),
+												swing=(20.0, 0.0, 40.0), arc=(0.0, 0.0, 0.0),
+												arcIncr=(two_pi / 120.0, 0.0, two_pi / 60.0),
+												lightNum=1},
+							LightStruct {amb=Color4 0.0 0.0 0.2 1.0, diff=Color4 0.0 0.0 0.8 1.0,
+												spec=Color4 0.0 0.0 0.4 1.0, pos=Vertex4 0.0 0.0 0.0 1.0,
+												spotDir=Normal3 0.0 (-1.0) 0.0, spotExp=20.0,
+												cutoff=60.0, atten=(1.0, 0.0, (0.0::GLfloat)),
+												trans=Vector3 0.0 1.25 0.0, rot=(0.0, 0.0, 0.0),
+												swing=(20.0, 0.0, 40.0), arc=(0.0, 0.0, 0.0),
+												arcIncr=(two_pi / 50.0, 0.0, two_pi / 100.0),
+												lightNum=2}]
 
 -- display callback function
 display spin = do
@@ -38,7 +54,7 @@ display spin = do
 		setLights (aimLights angle)
 		drawLights (aimLights angle)
 		
-		print . rot . head $ lightList
+		--print . rot . head $ lightList
 		
 		preservingMatrix $ do
 			rotate (-90.0) $ Vector3 1.0 0.0 (0::GLfloat)
@@ -150,7 +166,7 @@ d = 1.0/16.0
 
 idle spin = do
 	angle <- get spin
-	spin $= (modAngle angle) + 0.2
+	spin $= (modAngle angle) + 0.1
 	postRedisplay Nothing
 
 modAngle a
