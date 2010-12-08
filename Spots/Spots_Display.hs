@@ -34,8 +34,11 @@ display spin = do
 		angle <- get spin
 		rotate angle $ Vector3 0.0 1.0 (0.0::GLfloat)
 		
-		setLights
-		drawLights
+		let lightList = aimLights angle
+		setLights (aimLights angle)
+		drawLights (aimLights angle)
+		
+		print . rot . head $ lightList
 		
 		preservingMatrix $ do
 			rotate (-90.0) $ Vector3 1.0 0.0 (0::GLfloat)
@@ -60,28 +63,42 @@ initLight lt = do
 	attenuation (Light $ lightNum lt) $= atten lt
 
 -- aim lights
-{-
-rotateLight lt = swingX * (sin arcX)
+aimLights mult = map (rotateLight mult) spotLights
+
+rotateLight mult lt = LightStruct {amb=amb lt, diff=diff lt,
+	spec=spec lt, pos=pos lt,
+	spotDir=spotDir lt, spotExp=spotExp lt,
+	cutoff=cutoff lt, atten=atten lt,
+	trans=trans lt, 
+	rot=(swingX * (sin (arcIncX*mult)), swingY * (sin (arcIncY*mult)), swingZ * (sin (arcIncZ*mult))),
+	swing=swing lt, arc=(arcX+(arcIncX*mult), arcY+(arcIncY*mult), arcZ+(arcIncZ*mult)),
+	arcIncr=arcIncr lt,
+	lightNum=lightNum lt}
 	where
 		(swingX, swingY, swingZ) = swing lt
 		(arcX, arcY, arcZ) = arc lt
-		(arcIncX, arcIncY, arcInZ) = arcIncr lt
--}
+		(arcIncX, arcIncY, arcIncZ) = arcIncr lt
+
 		
 -- set lights
-setLights = do
-	mapM_ setLight spotLights
+setLights lightList= do
+	mapM_ setLight lightList
 
 setLight :: LightStruct -> IO()
 setLight lt = do
 	preservingMatrix $ do
 		translate $ trans lt
+		rotate rotX $ Vector3 1.0 0.0 (0.0::GLfloat)
+		rotate rotY $ Vector3 0.0 1.0 (0.0::GLfloat)
+		rotate rotZ $ Vector3 0.0 0.0 (1.0::GLfloat)
 		position (Light $ lightNum lt) $= pos lt
 		spotDirection (Light $ lightNum lt) $= spotDir lt
+	where
+		(rotX, rotY, rotZ) = rot lt
 
 -- draw lights
-drawLights = do
-	mapM_ drawLight spotLights
+drawLights lightList= do
+	mapM_ drawLight lightList
 
 drawLight :: LightStruct -> IO()
 drawLight lt = do
@@ -89,10 +106,15 @@ drawLight lt = do
 	color $ diff lt
 	preservingMatrix $ do
 		translate $ trans lt
+		rotate rotX $ Vector3 1.0 0.0 (0.0::GLfloat)
+		rotate rotY $ Vector3 0.0 1.0 (0.0::GLfloat)
+		rotate rotZ $ Vector3 0.0 0.0 (1.0::GLfloat)
 		renderPrimitive Lines $ do
 			vertex $ normalToVertex (spotDir lt)
 			vertex $ pos lt
 	lighting $= Enabled
+	where
+		(rotX, rotY, rotZ) = rot lt
 
 normalToVertex :: Normal3 GLfloat -> Vertex3 GLfloat
 normalToVertex (Normal3 x y z) = Vertex3 x y z	
@@ -128,7 +150,7 @@ d = 1.0/16.0
 
 idle spin = do
 	angle <- get spin
-	spin $= (modAngle angle) + 0.5
+	spin $= (modAngle angle) + 0.2
 	postRedisplay Nothing
 
 modAngle a
