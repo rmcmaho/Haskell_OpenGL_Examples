@@ -1,10 +1,13 @@
 module LightRec (
 
-LightStruct(..)
+LightStruct(..),
+LightList,
+nullLightList,
 
 ) where
 
 import Graphics.Rendering.OpenGL
+import Data.IORef
 
 data LightStruct = LightStruct { amb :: Color4 GLfloat
 													,diff :: Color4 GLfloat
@@ -21,3 +24,8 @@ data LightStruct = LightStruct { amb :: Color4 GLfloat
 													,arcIncr :: (GLfloat, GLfloat, GLfloat)
 													,lightNum :: GLsizei
 													}
+
+type LightList = IORef [LightStruct]
+
+nullLightList :: IO LightList
+nullLightList = newIORef []

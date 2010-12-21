@@ -2,7 +2,8 @@ module Spots_Display (
 
 display,
 idle,
-initfn
+initfn,
+spotLights
 
 ) where
 
@@ -15,6 +16,7 @@ import LightRec
 
 -- useful function
 two_pi = 2*pi
+speed_factor = 10
 
 -- list of spotlights
 spotLights :: [LightStruct]
@@ -44,17 +46,17 @@ spotLights = [LightStruct {amb=Color4 0.2 0.0 0.0 1.0, diff=Color4 0.8 0.0 0.0 1
 												lightNum=2}]
 
 -- display callback function
-display spin = do
+display spin lightList = do
 	clear [ColorBuffer,DepthBuffer]
 	preservingMatrix $ do
 		angle <- get spin
+		myList <- get lightList
 		rotate angle $ Vector3 0.0 1.0 (0.0::GLfloat)
 		
-		let lightList = aimLights angle
-		setLights (aimLights angle)
-		drawLights (aimLights angle)
-		
-		--print . rot . head $ lightList
+		lightList $= aimLights myList
+		myList <- get lightList
+		setLights myList
+		drawLights myList
 		
 		preservingMatrix $ do
 			rotate (-90.0) $ Vector3 1.0 0.0 (0::GLfloat)
@@ -79,31 +81,38 @@ initLight lt = do
 	attenuation (Light $ lightNum lt) $= atten lt
 
 -- aim lights
-aimLights mult = map (rotateLight mult) spotLights
+aimLights :: [LightStruct] -> [LightStruct]
+aimLights lightList = map (rotateLight) lightList
 
-rotateLight mult lt = LightStruct {amb=amb lt, diff=diff lt,
+rotateLight lt = LightStruct {amb=amb lt, diff=diff lt,
 	spec=spec lt, pos=pos lt,
 	spotDir=spotDir lt, spotExp=spotExp lt,
 	cutoff=cutoff lt, atten=atten lt,
 	trans=trans lt, 
-	rot=(swingX * (sin (arcIncX*mult)), swingY * (sin (arcIncY*mult)), swingZ * (sin (arcIncZ*mult))),
-	swing=swing lt, arc=(arcX+(arcIncX*mult), arcY+(arcIncY*mult), arcZ+(arcIncZ*mult)),
+	rot=(swingX * (sin arcX), swingY * (sin arcY), swingZ * (sin arcZ)),
+	swing=swing lt, arc=(arcX+arcIncX / speed_factor, arcY+arcIncY/ speed_factor, arcZ+arcIncZ/ speed_factor),
 	arcIncr=arcIncr lt,
 	lightNum=lightNum lt}
 	where
 		(swingX, swingY, swingZ) = swing lt
-		(arcX, arcY, arcZ) = arc lt
+		(arcX, arcY, arcZ) = modArcTuple . arc $ lt
 		(arcIncX, arcIncY, arcIncZ) = arcIncr lt
 
+modArcTuple (arcX, arcY, arcZ) = (modArc arcX, modArc arcY, modArc arcZ)
+
+modArc arc
+	| arc > two_pi = arc - two_pi
+  | otherwise = arc
 		
 -- set lights
-setLights lightList= do
-	mapM_ setLight lightList
+setLights myList= do
+	mapM_ setLight myList
 
 setLight :: LightStruct -> IO()
 setLight lt = do
 	preservingMatrix $ do
 		translate $ trans lt
+		--print rotX
 		rotate rotX $ Vector3 1.0 0.0 (0.0::GLfloat)
 		rotate rotY $ Vector3 0.0 1.0 (0.0::GLfloat)
 		rotate rotZ $ Vector3 0.0 0.0 (1.0::GLfloat)
@@ -113,8 +122,8 @@ setLight lt = do
 		(rotX, rotY, rotZ) = rot lt
 
 -- draw lights
-drawLights lightList= do
-	mapM_ drawLight lightList
+drawLights myList= do
+	mapM_ drawLight myList
 
 drawLight :: LightStruct -> IO()
 drawLight lt = do
