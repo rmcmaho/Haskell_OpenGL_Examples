@@ -105,6 +105,7 @@ modArc arc
   | otherwise = arc
 		
 -- set lights
+setLights :: [LightStruct] -> IO()
 setLights myList= do
 	mapM_ setLight myList
 
