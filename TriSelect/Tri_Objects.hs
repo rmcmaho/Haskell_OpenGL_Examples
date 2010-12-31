@@ -8,7 +8,7 @@ import Random
 data TriObject = TriObject {v1 :: Vertex2 GLfloat,
                             v2 :: Vertex2 GLfloat,
                             v3 :: Vertex2 GLfloat,
-                            color :: Color3 GLfloat
+                            triColor :: Color3 GLfloat
                             } deriving (Show)
 
 type TriObjectList = IORef [TriObject]

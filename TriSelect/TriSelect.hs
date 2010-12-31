@@ -11,7 +11,7 @@ import Graphics.UI.GLUT.Menu
 import System.Exit
 
 -- For callbacks
-import TriSelect_Display (display, idle)
+import TriSelect_Display (display, idle, keyboardMouse)
 
 -- For trianlge objects
 import Tri_Objects
@@ -33,7 +33,7 @@ main = do
   objectList <- newIORef (initObjects gen numObjects)
   
   reshapeCallback $= Nothing
-  keyboardMouseCallback $= Nothing
+  keyboardMouseCallback $= Just (keyboardMouse objectList)
   displayCallback $= display objectList
   idleCallback $= Nothing
   
