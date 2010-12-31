@@ -19,12 +19,18 @@ import Tri_Objects
 -- Random number generation
 import Random
 
-exitLoop = exitSuccess
+-- To use stateful objects (naughty)
+import Data.IORef
 
+-- Main
 main = do
   (progname,_) <- getArgsAndInitialize
   initialDisplayMode $= [RGBMode, DoubleBuffered]
   createWindow "Select Test"
+  
+  gen <- newStdGen
+  let numObjects = 10
+  objectList <- newIORef (initObjects gen numObjects)
   
   reshapeCallback $= Nothing
   keyboardMouseCallback $= Nothing
@@ -32,10 +38,11 @@ main = do
   idleCallback $= Just display
   
   -- This does not work with "runhaskell". It needs to be compiled.
-  attachMenu RightButton (Menu [MenuEntry "Exit" exitLoop])
+  attachMenu RightButton (Menu [MenuEntry "Exit" exitSuccess])
   
   mainLoop
   
+-- Initialize triangle objects  
 initObjects :: StdGen -> Int -> [TriObject]
 initObjects gen numObjects  
   | numObjects > 0 = (randomObject gen1):(initObjects gen2 (numObjects-1))
