@@ -10,12 +10,15 @@ import Graphics.UI.GLUT
 
 import Control.Concurrent (threadDelay, yield)
 
+import Tri_Objects
+
 zoom :: GLfloat
 zoom = 1.0
 
 zRotation = 90.0
 
-display = do
+display :: TriObjectList -> IO ()
+display objectList = do
   
   preservingMatrix $ do
   
@@ -29,12 +32,21 @@ display = do
     scale zoom zoom zoom
     rotate zRotation $ Vector3 0 0 (1::GLfloat)
     
-    render
+    myObjectList <- get objectList
+    render myObjectList
     
   swapBuffers
   flush
   
-render = return ()
+render :: [TriObject] -> IO ()
+render objectList = mapM_ renderTriangle objectList
+    
+renderTriangle :: TriObject -> IO ()    
+renderTriangle object = do
+  renderPrimitive Triangles $ do
+    vertex $ v1 object
+    vertex $ v2 object
+    vertex $ v3 object
 
 idle = do
   yield

@@ -11,7 +11,7 @@ data TriObject = TriObject {v1 :: Vertex2 GLfloat,
                             color :: Color3 GLfloat
                             } deriving (Show)
 
-data TriObjectList = IORef [TriObject]
+type TriObjectList = IORef [TriObject]
 
 randomObject :: StdGen -> TriObject
 randomObject gen = TriObject (Vertex2 (x + v1_X - 25) (y + v1_Y - 25))

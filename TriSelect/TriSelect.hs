@@ -34,8 +34,8 @@ main = do
   
   reshapeCallback $= Nothing
   keyboardMouseCallback $= Nothing
-  displayCallback $= display
-  idleCallback $= Just display
+  displayCallback $= display objectList
+  idleCallback $= Nothing
   
   -- This does not work with "runhaskell". It needs to be compiled.
   attachMenu RightButton (Menu [MenuEntry "Exit" exitSuccess])
