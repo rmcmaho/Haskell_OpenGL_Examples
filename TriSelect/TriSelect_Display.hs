@@ -16,6 +16,11 @@ import Tri_Objects
 zoom :: GLfloat
 zoom = 1.0
 
+ooMAXSELECT = 100
+
+windW = 300
+windH = 300
+
 zRotation ::GLfloat
 zRotation = 90.0
 
@@ -67,7 +72,25 @@ recolorTri :: TriObjectList -> GLint -> IO ()
 recolorTri objectList index = return ()
 
 doSelect :: Position -> GLint
-doSelect position = (-1)
+doSelect (Position x y) = do
+  (_, maybeHitRecords) <- do 
+    vp@(_, (Size _ height)) <-  get viewport
+    getHitRecords ooMAXSELECT $
+      withName (Name 0) $ do
+        preservingMatrix $ do
+          matrixMode $= Projection
+          loadIdentity
+          pickMatrix (fromIntegral x, fromIntegral height - fromIntegral y) (4,4) vp
+          ortho2D (-175) 175 (-175) 175
+          matrixMode $= Modelview 0
+          clear [ColorBuffer]
+  processHits 0 maybeHitRecords
+
+processHits :: GLint -> Maybe[HitRecord] -> GLint
+processHits _ Nothing = error  "selection buffer overflow"
+--processHits hits (Just buffer) =  buffer !! ((fromIntegral hits - 1) * 4 + 3)
+processHits _ _ = 0::GLint
+
 
 {-
 -- Example of getHitRecords (eq of glSelectBuffer)
@@ -88,5 +111,11 @@ pickSceneNode gsRef dir x y=  do
                        perspective perseAngle 1.0 0.1 10000.0
                        drawCanvas'' gs Nothing
       processHits gsRef dir maybeHitRecords
+
+processHits :: GSRef  -> KeyState -> Maybe[HitRecord] -> STM ()
+processHits _ _ Nothing = error  "selection buffer overflow"
+processHits gs dir (Just ((HitRecord _ _ (Name n:_)):_)) =  findHitAction gs n dir >> drawCanvas gs
+processHits _ _ _ = return ()
+
 
 -}
