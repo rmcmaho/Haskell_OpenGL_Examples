@@ -47,7 +47,7 @@ display objectList = do
   
 render :: RenderMode -> [TriObject] -> IO ()
 render Render objectList = mapM_ renderTriangle objectList
-render Select objectList = renderAndLoadTriangles objectList (fromIntegral . length $ objectList)
+render Select objectList = renderAndLoadTriangles objectList (fromIntegral (length objectList) - 1)
     
 renderAndLoadTriangles :: [TriObject] -> GLuint -> IO ()  
 renderAndLoadTriangles (object:[]) name = do
@@ -72,6 +72,7 @@ idle = do
 keyboardMouse :: TriObjectList -> Key -> KeyState -> Modifiers -> Position -> IO ()
 keyboardMouse objectList (MouseButton LeftButton) Down _ position = do
   myObjectList <- get objectList
+  print myObjectList
   selectedItem <- doSelect position myObjectList
   gen <- newStdGen
   objectList $= recolorTri gen myObjectList selectedItem
@@ -80,17 +81,26 @@ keyboardMouse _ _ _ _ _ = return ()
 --keyboardMouse objectList key state modifiers position = return ()
 
 recolorTri :: StdGen -> [TriObject] -> GLint -> [TriObject]
-recolorTri gen objectList index = (take (fromIntegral index-1) objectList) ++ (newObject:(drop (fromIntegral index + 1) objectList))
+recolorTri _ objectList (-1) = objectList
+recolorTri gen objectList index = listHead ++ (return newObject) ++ listTail
   where oldObject = objectList !! fromIntegral index
         c1:c2:c3:[] = take 3 $ randomRs (0,100) gen
         newObject = TriObject (v1 oldObject) (v2 oldObject) (v3 oldObject) (Color3 ((c1 + 50) / 150.0) ((c2 + 50) / 150.0) ((c3 + 50) / 150.0) )
+        listHead = take (fromIntegral index - 1) objectList
+        listTail = drop (fromIntegral index) objectList
 
 
 doSelect :: Position -> [TriObject] -> IO (GLint)
 doSelect pos@(Position x y) myObjectList= do
   maybeHitRecords <- getTriangleSelects pos myObjectList
-  return (0::GLint)
+  print maybeHitRecords
+  return (getHeadRecord maybeHitRecords)
 --doSelect _ = return (0::GLint)
+
+getHeadRecord :: Maybe[HitRecord] -> GLint
+getHeadRecord Nothing = -1
+getHeadRecord (Just ((HitRecord _ _ (Name n:_)):_)) = fromIntegral n
+getHeadRecord _ = -1
 
 {-
 doSelect (Position x y) = do
