@@ -79,6 +79,12 @@ keyboardMouse objectList (MouseButton LeftButton) Down _ position = do
   gen <- newStdGen
   objectList $= recolorTri gen myObjectList (convertNameToIndex (length myObjectList) selectedItem)
 
+keyboardMouse objectList (MouseButton MiddleButton) Down _ position = do
+  myObjectList <- get objectList
+  print myObjectList
+  selectedItem <- doSelect position myObjectList
+  objectList $= growTri myObjectList (convertNameToIndex (length myObjectList) selectedItem)
+
 keyboardMouse _ _ _ _ _ = return ()
 --keyboardMouse objectList key state modifiers position = return ()
 
@@ -94,6 +100,20 @@ recolorTri gen objectList index = listHead ++ (return newObject) ++ listTail
         listHead = take (fromIntegral index) objectList
         listTail = drop (fromIntegral index + 1) objectList
 
+growTri :: [TriObject] -> GLint -> [TriObject]
+growTri objectList (-1) = objectList
+growTri objectList index = listHead ++ (return newObject) ++ listTail
+  where oldObject = objectList !! fromIntegral index
+        newObject = growTriangle oldObject
+        listHead = take (fromIntegral index) objectList
+        listTail = drop (fromIntegral index + 1) objectList
+
+
+growTriangle (TriObject (Vertex2 v0_X v0_Y) (Vertex2 v1_X v1_Y) (Vertex2 v2_X v2_Y) color0) = TriObject newV0 newV1 newV2 color0
+  where v@(Vertex2 v_X v_Y) = Vertex2 ((v0_X + v1_X + v2_X) / 3) ((v0_Y + v1_Y + v2_Y) / 3) 
+        newV0 = Vertex2 (1.5 * (v0_X - v_X) + v_X) (1.5 * (v0_Y - v_Y) + v_Y) 
+        newV1 = Vertex2 (1.5 * (v1_X - v_X) + v_X) (1.5 * (v1_Y - v_Y) + v_Y) 
+        newV2 = Vertex2 (1.5 * (v2_X - v_X) + v_X) (1.5 * (v2_Y - v_Y) + v_Y) 
 
 doSelect :: Position -> [TriObject] -> IO (GLint)
 doSelect pos@(Position x y) myObjectList= do
