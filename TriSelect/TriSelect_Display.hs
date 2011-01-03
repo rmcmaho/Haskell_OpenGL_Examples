@@ -12,6 +12,8 @@ import GHC.Conc (unsafeIOToSTM)
 
 import Control.Concurrent (threadDelay, yield)
 
+import Random
+
 import Tri_Objects
 
 zoom :: GLfloat
@@ -42,16 +44,27 @@ display objectList = do
     scale zoom zoom zoom
     rotate zRotation $ Vector3 0 0 (1::GLfloat)
     
-    render myObjectList
+    render Render myObjectList
     
   swapBuffers
   flush
   
-render :: [TriObject] -> IO ()
-render objectList = mapM_ renderTriangle objectList
+render :: RenderMode -> [TriObject] -> IO ()
+render Render objectList = mapM_ renderTriangle objectList
+render Select objectList = renderAndLoadTriangles objectList (fromIntegral . length $ objectList)
     
+renderAndLoadTriangles :: [TriObject] -> GLuint -> IO ()  
+renderAndLoadTriangles (object:[]) name = do
+  loadName (Name name)
+  renderTriangle object
+renderAndLoadTriangles (object:objectList) name = do
+  loadName (Name name)
+  renderTriangle object
+  renderAndLoadTriangles objectList (name-1)
+  
 renderTriangle :: TriObject -> IO ()    
 renderTriangle object = do
+  print object
   color $ triColor object
   renderPrimitive Triangles $ do
     vertex $ v1 object
@@ -63,18 +76,31 @@ idle = do
   threadDelay 1000
  
 keyboardMouse :: TriObjectList -> Key -> KeyState -> Modifiers -> Position -> IO ()
-keyboardMouse objectList (MouseButton LeftButton) Down _ position = 
-  recolorTri objectList (doSelect position)
+keyboardMouse objectList (MouseButton LeftButton) Down _ position = do
+  myObjectList <- get objectList
+  
+  --print myObjectList
+  
+  selectedItem <- doSelect position myObjectList
+  gen <- newStdGen
+  objectList $= recolorTri gen myObjectList selectedItem
 
 keyboardMouse _ _ _ _ _ = return ()
 --keyboardMouse objectList key state modifiers position = return ()
 
-recolorTri :: TriObjectList -> GLint -> IO ()
-recolorTri objectList index = return ()
+recolorTri :: StdGen -> [TriObject] -> GLint -> [TriObject]
+recolorTri gen objectList index = (take (fromIntegral index-1) objectList) ++ (newObject:(drop (fromIntegral index + 1) objectList))
+  where oldObject = objectList !! fromIntegral index
+        c1:c2:c3:[] = take 3 $ randomRs (0,100) gen
+        newObject = TriObject (v1 oldObject) (v2 oldObject) (v3 oldObject) (Color3 ((c1 + 50) / 150.0) ((c2 + 50) / 150.0) ((c3 + 50) / 150.0) )
 
 
-doSelect :: Position -> GLint
-doSelect (Position x y) = 0::GLint
+doSelect :: Position -> [TriObject] -> IO (GLint)
+doSelect pos@(Position x y) myObjectList= do
+  maybeHitRecords <- getTriangleSelects pos myObjectList
+  return (0::GLint)
+--doSelect _ = return (0::GLint)
+
 {-
 doSelect (Position x y) = do
   (_, maybeHitRecords) <- do 
@@ -92,8 +118,8 @@ doSelect (Position x y) = do
 -}
 
 
-getTriangleSelects :: Position ->  IO (Maybe[HitRecord])
-getTriangleSelects (Position x y) = do
+getTriangleSelects :: Position -> [TriObject] -> IO (Maybe[HitRecord])
+getTriangleSelects (Position x y) myObjectList = do
   vp@(_, (Size _ height)) <-  get viewport
   (_, maybeHitRecords) <- getHitRecords ooMAXSELECT $ withName (Name 0) $ do
     preservingMatrix $ do
@@ -103,6 +129,9 @@ getTriangleSelects (Position x y) = do
       ortho2D (-175) 175 (-175) 175
       matrixMode $= Modelview 0
       clear [ColorBuffer]
+      scale zoom zoom zoom
+      rotate zRotation $ Vector3 0 0 (1::GLfloat)
+      render Select myObjectList
   return maybeHitRecords
 
 
