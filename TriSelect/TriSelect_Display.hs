@@ -55,6 +55,8 @@ renderAndLoadTriangles (object:[]) name = do
   renderTriangle object
 renderAndLoadTriangles (object:objectList) name = do
   loadName (Name name)
+  print (Name name)
+  print object
   renderTriangle object
   renderAndLoadTriangles objectList (name-1)
   
@@ -86,8 +88,8 @@ recolorTri gen objectList index = listHead ++ (return newObject) ++ listTail
   where oldObject = objectList !! fromIntegral index
         c1:c2:c3:[] = take 3 $ randomRs (0,100) gen
         newObject = TriObject (v1 oldObject) (v2 oldObject) (v3 oldObject) (Color3 ((c1 + 50) / 150.0) ((c2 + 50) / 150.0) ((c3 + 50) / 150.0) )
-        listHead = take (fromIntegral index - 1) objectList
-        listTail = drop (fromIntegral index) objectList
+        listHead = take (fromIntegral index) objectList
+        listTail = drop (fromIntegral index + 1) objectList
 
 
 doSelect :: Position -> [TriObject] -> IO (GLint)
