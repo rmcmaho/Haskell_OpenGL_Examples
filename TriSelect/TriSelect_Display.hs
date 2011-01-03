@@ -77,10 +77,13 @@ keyboardMouse objectList (MouseButton LeftButton) Down _ position = do
   print myObjectList
   selectedItem <- doSelect position myObjectList
   gen <- newStdGen
-  objectList $= recolorTri gen myObjectList selectedItem
+  objectList $= recolorTri gen myObjectList (convertNameToIndex (length myObjectList) selectedItem)
 
 keyboardMouse _ _ _ _ _ = return ()
 --keyboardMouse objectList key state modifiers position = return ()
+
+convertNameToIndex _ (-1) = (-1)
+convertNameToIndex objectLength index = (fromIntegral objectLength - index - 1)
 
 recolorTri :: StdGen -> [TriObject] -> GLint -> [TriObject]
 recolorTri _ objectList (-1) = objectList
@@ -101,6 +104,7 @@ doSelect pos@(Position x y) myObjectList= do
 
 getHeadRecord :: Maybe[HitRecord] -> GLint
 getHeadRecord Nothing = -1
+getHeadRecord (Just []) = -1
 getHeadRecord (Just ((HitRecord _ _ (Name n:_)):_)) = fromIntegral n
 getHeadRecord _ = -1
 
