@@ -8,6 +8,7 @@ module TriSelect_Display (
 
 import Graphics.Rendering.OpenGL
 import Graphics.UI.GLUT
+import GHC.Conc (unsafeIOToSTM)
 
 import Control.Concurrent (threadDelay, yield)
 
@@ -71,7 +72,10 @@ keyboardMouse _ _ _ _ _ = return ()
 recolorTri :: TriObjectList -> GLint -> IO ()
 recolorTri objectList index = return ()
 
+
 doSelect :: Position -> GLint
+doSelect (Position x y) = 0::GLint
+{-
 doSelect (Position x y) = do
   (_, maybeHitRecords) <- do 
     vp@(_, (Size _ height)) <-  get viewport
@@ -85,11 +89,21 @@ doSelect (Position x y) = do
           matrixMode $= Modelview 0
           clear [ColorBuffer]
   processHits 0 maybeHitRecords
+-}
 
-processHits :: GLint -> Maybe[HitRecord] -> GLint
-processHits _ Nothing = error  "selection buffer overflow"
---processHits hits (Just buffer) =  buffer !! ((fromIntegral hits - 1) * 4 + 3)
-processHits _ _ = 0::GLint
+
+getTriangleSelects :: Position ->  IO (Maybe[HitRecord])
+getTriangleSelects (Position x y) = do
+  vp@(_, (Size _ height)) <-  get viewport
+  (_, maybeHitRecords) <- getHitRecords ooMAXSELECT $ withName (Name 0) $ do
+    preservingMatrix $ do
+      matrixMode $= Projection
+      loadIdentity
+      pickMatrix (fromIntegral x, fromIntegral height - fromIntegral y) (4,4) vp
+      ortho2D (-175) 175 (-175) 175
+      matrixMode $= Modelview 0
+      clear [ColorBuffer]
+  return maybeHitRecords
 
 
 {-
