@@ -29,23 +29,19 @@ zRotation = 90.0
 
 display :: TriObjectList -> IO ()
 display objectList = do
-  
   myObjectList <- get objectList
-  
+  -- Log
+  --print myObjectList
+
   preservingMatrix $ do
-  
     matrixMode $= Projection
     loadIdentity
     ortho2D (-175) 175 (-175) 175
     matrixMode $= Modelview 0
-  
     clear [ColorBuffer]
-  
     scale zoom zoom zoom
     rotate zRotation $ Vector3 0 0 (1::GLfloat)
-    
     render Render myObjectList
-    
   swapBuffers
   flush
   
@@ -64,7 +60,6 @@ renderAndLoadTriangles (object:objectList) name = do
   
 renderTriangle :: TriObject -> IO ()    
 renderTriangle object = do
-  print object
   color $ triColor object
   renderPrimitive Triangles $ do
     vertex $ v1 object
@@ -72,15 +67,11 @@ renderTriangle object = do
     vertex $ v3 object
 
 idle = do
-  yield
-  threadDelay 1000
+  postRedisplay Nothing
  
 keyboardMouse :: TriObjectList -> Key -> KeyState -> Modifiers -> Position -> IO ()
 keyboardMouse objectList (MouseButton LeftButton) Down _ position = do
   myObjectList <- get objectList
-  
-  --print myObjectList
-  
   selectedItem <- doSelect position myObjectList
   gen <- newStdGen
   objectList $= recolorTri gen myObjectList selectedItem

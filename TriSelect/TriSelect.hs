@@ -34,13 +34,12 @@ main = do
   
   reshapeCallback $= Nothing
   keyboardMouseCallback $= Just (keyboardMouse objectList)
-  displayCallback $= display objectList
-  idleCallback $= Nothing
-  
-  -- This does not work with "runhaskell". It needs to be compiled.
-  attachMenu RightButton (Menu [MenuEntry "Exit" exitSuccess])
-  
+  displayCallback $= (display objectList)
+  idleCallback $= Just idle
   mainLoop
+  -- This does not work with "runhaskell". It needs to be compiled.
+  --attachMenu RightButton (Menu [MenuEntry "Exit" exitSuccess])
+  
   
 -- Initialize triangle objects  
 initObjects :: StdGen -> Int -> [TriObject]
