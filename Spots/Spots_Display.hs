@@ -21,6 +21,30 @@ speed_factor = 10
 -- list of spotlights
 spotLights :: [LightStruct]
 spotLights = [LightStruct {amb=Color4 0.2 0.0 0.0 1.0, diff=Color4 0.8 0.0 0.0 1.0,
+												spec=Color4 0.4 0.0 0.0 1.0, pos=Vertex4 0.0 0.0 0.0 1.0,
+												spotDir=Normal3 0.0 (-1.0) 0.0, spotExp=20.0,
+												cutoff=60.0, atten=(1.0, 0.0, (0.0::GLfloat)),
+												trans=Vector3 0.0 1.25 0.0, rot=(0.0, 0.0, 0.0),
+												swing=(20.0, 0.0, 40.0), arc=(0.0, 0.0, 0.0),
+												arcIncr=(two_pi / 70.0, 0.0, two_pi / 140.0),
+												lightNum=0},
+							LightStruct {amb=Color4 0.0 0.2 0.0 1.0, diff=Color4 0.0 0.8 0.0 1.0,
+												spec=Color4 0.0 0.4 0.0 1.0, pos=Vertex4 0.0 0.0 0.0 1.0,
+												spotDir=Normal3 0.0 (-1.0) 0.0, spotExp=20.0,
+												cutoff=60.0, atten=(1.0, 0.0, (0.0::GLfloat)),
+												trans=Vector3 0.0 1.25 0.0, rot=(0.0, 0.0, 0.0),
+												swing=(20.0, 0.0, 40.0), arc=(0.0, 0.0, 0.0),
+												arcIncr=(two_pi / 120.0, 0.0, two_pi / 60.0),
+												lightNum=1},
+							LightStruct {amb=Color4 0.0 0.0 0.2 1.0, diff=Color4 0.0 0.0 0.8 1.0,
+												spec=Color4 0.0 0.0 0.4 1.0, pos=Vertex4 0.0 0.0 0.0 1.0,
+												spotDir=Normal3 0.0 (-1.0) 0.0, spotExp=20.0,
+												cutoff=60.0, atten=(1.0, 0.0, (0.0::GLfloat)),
+												trans=Vector3 0.0 1.25 0.0, rot=(0.0, 0.0, 0.0),
+												swing=(20.0, 0.0, 40.0), arc=(0.0, 0.0, 0.0),
+												arcIncr=(two_pi / 50.0, 0.0, two_pi / 100.0),
+												lightNum=2}]
+
                            spec=Color4 0.4 0.0 0.0 1.0, pos=Vertex4 0.0 0.0 0.0 1.0,
                            spotDir=Normal3 0.0 (-1.0) 0.0, spotExp=20.0,
                            cutoff=60.0, atten=(1.0, 0.0, (0.0::GLfloat)),
@@ -48,6 +72,7 @@ spotLights = [LightStruct {amb=Color4 0.2 0.0 0.0 1.0, diff=Color4 0.8 0.0 0.0 1
 -- display callback function
 display spin lightList = do
 	clear [ColorBuffer,DepthBuffer]
+	preservingMatrix $ do
         preservingMatrix $ do
 		angle <- get spin
 		myList <- get lightList
