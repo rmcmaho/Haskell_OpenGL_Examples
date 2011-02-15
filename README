@@ -1,0 +1,27 @@
+OpenGL Example Conversion
+============================
+This project is an attempt to convert the OpenGL examples from C to Haskell.
+http://www.opengl.org/resources/code/samples/glut_examples/examples/examples.html
+
+Where possible, the Haskell code resembles the C code as closely as possible. This is an attempt to help myself and others learn how to program OpenGL in Haskell.
+
+
+Getting the source
+============================
+Newest source can be found on GitHub.
+https://github.com/rmcmaho/Haskell_OpenGL_Examples/
+
+
+Build and Running
+============================
+
+On Mac/Unix
+
+   $ cabal configure
+   $ cabal build
+   $ ./dist/build/Spots/Spots
+   $ ./dist/build/TriSelect/TriSelect
+
+On Windows
+
+   ?????
