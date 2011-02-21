@@ -154,17 +154,11 @@ myPoints w h = (,) <$> [0..w] <*> [0..(h-1)]
 renderSection :: (GLfloat,GLfloat) -> IO ()	
 renderSection (y,x) = 
   renderPrimitive TriangleStrip $ do
-    vertex $ Vertex2 (d*x) (d*(y+1.0)::GLfloat)
-    vertex $ Vertex2 (d*x) (d*y::GLfloat)
-    vertex $ Vertex2 (d*(x-1.0)) (d*y::GLfloat)
+    vertex $ Vertex2 (delta*x) (delta*(y+1.0)::GLfloat)
+    vertex $ Vertex2 (delta*x) (delta*y::GLfloat)
+    vertex $ Vertex2 (delta*(x-1.0)) (delta*y::GLfloat)
 
-renderSection' (y,x) =
-  renderPrimitive TriangleStrip $ do
-    vertex $ Vertex2 (1.0::GLfloat) (-1.0)
-    vertex $ Vertex2 0.0 (1.0::GLfloat)
-    vertex $ Vertex2 (-1.0) (-1.0::GLfloat)
-
-d = 1.0/16.0
+delta = 1.0/16.0
 
 idle spin = do
 	angle <- get spin

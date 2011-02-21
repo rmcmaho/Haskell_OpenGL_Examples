@@ -1,0 +1,24 @@
+HitRecords are confusing.
+
+-- Example of getHitRecords (eq of glSelectBuffer)
+
+pickSceneNode :: GSRef -> KeyState -> GLint -> GLint -> STM ()
+pickSceneNode gsRef dir x y=  do
+      gs <- readTVar gsRef
+      (_, maybeHitRecords) <- unsafeIOToSTM $ do
+        vp@(_, (Size _ height)) <-  get viewport
+        getHitRecords bufSize $ 
+           withName (Name 0) $ do
+               matrixMode $= Projection
+               preservingMatrix $ do
+                       loadIdentity
+                       pickMatrix (fromIntegral x, fromIntegral height - fromIntegral y) (5, 5) vp
+                       -- This is the same as at start of code. FIXME
+                       perspective perseAngle 1.0 0.1 10000.0
+                       drawCanvas'' gs Nothing
+      processHits gsRef dir maybeHitRecords
+
+processHits :: GSRef  -> KeyState -> Maybe[HitRecord] -> STM ()
+processHits _ _ Nothing = error  "selection buffer overflow"
+processHits gs dir (Just ((HitRecord _ _ (Name n:_)):_)) =  findHitAction gs n dir >> drawCanvas gs
+processHits _ _ _ = return ()
