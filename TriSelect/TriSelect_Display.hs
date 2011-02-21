@@ -68,8 +68,7 @@ renderTriangle object = do
     vertex $ v2 object
     vertex $ v3 object
 
-idle = do
-  postRedisplay Nothing
+idle = postRedisplay Nothing
  
 keyboardMouse :: TriObjectList -> Key -> KeyState -> Modifiers -> Position -> IO ()
 keyboardMouse objectList (MouseButton LeftButton) Down _ position = do
@@ -88,12 +87,12 @@ keyboardMouse objectList (MouseButton MiddleButton) Down _ position = do
 keyboardMouse _ _ _ _ _ = return ()
 --keyboardMouse objectList key state modifiers position = return ()
 
-convertNameToIndex _ (-1) = (-1)
-convertNameToIndex objectLength index = (fromIntegral objectLength - index - 1)
+convertNameToIndex _ (-1) = -1
+convertNameToIndex objectLength index = fromIntegral objectLength - index - 1
 
 recolorTri :: StdGen -> [TriObject] -> GLint -> [TriObject]
 recolorTri _ objectList (-1) = objectList
-recolorTri gen objectList index = listHead ++ (return newObject) ++ listTail
+recolorTri gen objectList index = listHead ++ return newObject ++ listTail
   where oldObject = objectList !! fromIntegral index
         c1:c2:c3:[] = take 3 $ randomRs (0,100) gen
         newObject = TriObject (v1 oldObject) (v2 oldObject) (v3 oldObject) (Color3 ((c1 + 50) / 150.0) ((c2 + 50) / 150.0) ((c3 + 50) / 150.0) )
@@ -102,7 +101,7 @@ recolorTri gen objectList index = listHead ++ (return newObject) ++ listTail
 
 growTri :: [TriObject] -> GLint -> [TriObject]
 growTri objectList (-1) = objectList
-growTri objectList index = listHead ++ (return newObject) ++ listTail
+growTri objectList index = listHead ++ return newObject ++ listTail
   where oldObject = objectList !! fromIntegral index
         newObject = growTriangle oldObject
         listHead = take (fromIntegral index) objectList
@@ -115,7 +114,7 @@ growTriangle (TriObject (Vertex2 v0_X v0_Y) (Vertex2 v1_X v1_Y) (Vertex2 v2_X v2
         newV1 = Vertex2 (1.5 * (v1_X - v_X) + v_X) (1.5 * (v1_Y - v_Y) + v_Y) 
         newV2 = Vertex2 (1.5 * (v2_X - v_X) + v_X) (1.5 * (v2_Y - v_Y) + v_Y) 
 
-doSelect :: Position -> [TriObject] -> IO (GLint)
+doSelect :: Position -> [TriObject] -> IO GLint
 doSelect pos@(Position x y) myObjectList= do
   maybeHitRecords <- getTriangleSelects pos myObjectList
   print maybeHitRecords
@@ -125,7 +124,7 @@ doSelect pos@(Position x y) myObjectList= do
 getHeadRecord :: Maybe[HitRecord] -> GLint
 getHeadRecord Nothing = -1
 getHeadRecord (Just []) = -1
-getHeadRecord (Just ((HitRecord _ _ (Name n:_)):_)) = fromIntegral n
+getHeadRecord (Just (HitRecord _ _ (Name n:_):_)) = fromIntegral n
 getHeadRecord _ = -1
 
 {-
@@ -147,9 +146,8 @@ doSelect (Position x y) = do
 
 getTriangleSelects :: Position -> [TriObject] -> IO (Maybe[HitRecord])
 getTriangleSelects (Position x y) myObjectList = do
-  vp@(_, (Size _ height)) <-  get viewport
-  (_, maybeHitRecords) <- getHitRecords ooMAXSELECT $ withName (Name 0) $ do
-    preservingMatrix $ do
+  vp@(_, Size _ height) <-  get viewport
+  (_, maybeHitRecords) <- getHitRecords ooMAXSELECT $ withName (Name 0) $ preservingMatrix $ do
       matrixMode $= Projection
       loadIdentity
       pickMatrix (fromIntegral x, fromIntegral height - fromIntegral y) (4,4) vp

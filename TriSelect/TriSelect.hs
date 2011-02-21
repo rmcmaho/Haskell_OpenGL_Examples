@@ -34,7 +34,7 @@ main = do
   
   reshapeCallback $= Nothing
   keyboardMouseCallback $= Just (keyboardMouse objectList)
-  displayCallback $= (display objectList)
+  displayCallback $= display objectList
   idleCallback $= Just idle
   mainLoop
   -- This does not work with "runhaskell". It needs to be compiled.
@@ -44,7 +44,7 @@ main = do
 -- Initialize triangle objects  
 initObjects :: StdGen -> Int -> [TriObject]
 initObjects gen numObjects  
-  | numObjects > 0 = (randomObject gen1):(initObjects gen2 (numObjects-1))
+  | numObjects > 0 = randomObject gen1:initObjects gen2 (numObjects-1)
   | otherwise = []
   where
     (gen1, gen2) = split gen

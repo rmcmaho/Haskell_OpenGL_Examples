@@ -18,9 +18,9 @@ main = do
 	createWindow "GLUT spotlight swing"
 	
 	spin <- newIORef (0.0::GLfloat)
-	lightList <- newIORef(spotLights)
+	lightList <- newIORef spotLights
 	
-	displayCallback $= (display spin lightList)
+	displayCallback $= display spin lightList
 	idleCallback $= Just (idle spin)
 	
 	initfn

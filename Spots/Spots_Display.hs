@@ -23,7 +23,7 @@ spotLights :: [LightStruct]
 spotLights = [LightStruct {amb=Color4 0.2 0.0 0.0 1.0, diff=Color4 0.8 0.0 0.0 1.0,
                            spec=Color4 0.4 0.0 0.0 1.0, pos=Vertex4 0.0 0.0 0.0 1.0,
                            spotDir=Normal3 0.0 (-1.0) 0.0, spotExp=20.0,
-                           cutoff=60.0, atten=(1.0, 0.0, (0.0::GLfloat)),
+                           cutoff=60.0, atten=(1.0, 0.0, 0.0::GLfloat),
                            trans=Vector3 0.0 1.25 0.0, rot=(0.0, 0.0, 0.0),
                            swing=(20.0, 0.0, 40.0), arc=(0.0, 0.0, 0.0),
                            arcIncr=(two_pi / 70.0, 0.0, two_pi / 140.0),
@@ -31,7 +31,7 @@ spotLights = [LightStruct {amb=Color4 0.2 0.0 0.0 1.0, diff=Color4 0.8 0.0 0.0 1
               LightStruct {amb=Color4 0.0 0.2 0.0 1.0, diff=Color4 0.0 0.8 0.0 1.0,
                            spec=Color4 0.0 0.4 0.0 1.0, pos=Vertex4 0.0 0.0 0.0 1.0,
                            spotDir=Normal3 0.0 (-1.0) 0.0, spotExp=20.0,
-                           cutoff=60.0, atten=(1.0, 0.0, (0.0::GLfloat)),
+                           cutoff=60.0, atten=(1.0, 0.0, 0.0::GLfloat),
                            trans=Vector3 0.0 1.25 0.0, rot=(0.0, 0.0, 0.0),
                            swing=(20.0, 0.0, 40.0), arc=(0.0, 0.0, 0.0),
                            arcIncr=(two_pi / 120.0, 0.0, two_pi / 60.0),
@@ -39,7 +39,7 @@ spotLights = [LightStruct {amb=Color4 0.2 0.0 0.0 1.0, diff=Color4 0.8 0.0 0.0 1
               LightStruct {amb=Color4 0.0 0.0 0.2 1.0, diff=Color4 0.0 0.0 0.8 1.0,
                            spec=Color4 0.0 0.0 0.4 1.0, pos=Vertex4 0.0 0.0 0.0 1.0,
                            spotDir=Normal3 0.0 (-1.0) 0.0, spotExp=20.0,
-                           cutoff=60.0, atten=(1.0, 0.0, (0.0::GLfloat)),
+                           cutoff=60.0, atten=(1.0, 0.0, 0.0::GLfloat),
                            trans=Vector3 0.0 1.25 0.0, rot=(0.0, 0.0, 0.0),
                            swing=(20.0, 0.0, 40.0), arc=(0.0, 0.0, 0.0),
                            arcIncr=(two_pi / 50.0, 0.0, two_pi / 100.0),
@@ -68,8 +68,7 @@ display spin lightList = do
 	flush
 
 -- init lights
-initLights = do
-	mapM_ initLight spotLights
+initLights = mapM_ initLight spotLights
 
 initLight :: LightStruct -> IO()
 initLight lt = do
@@ -83,14 +82,14 @@ initLight lt = do
 
 -- aim lights
 aimLights :: [LightStruct] -> [LightStruct]
-aimLights lightList = map (rotateLight) lightList
+aimLights = map rotateLight
 
 rotateLight lt = LightStruct {amb=amb lt, diff=diff lt,
 	spec=spec lt, pos=pos lt,
 	spotDir=spotDir lt, spotExp=spotExp lt,
 	cutoff=cutoff lt, atten=atten lt,
 	trans=trans lt, 
-	rot=(swingX * (sin arcX), swingY * (sin arcY), swingZ * (sin arcZ)),
+	rot=(swingX * sin arcX, swingY * sin arcY, swingZ * sin arcZ),
 	swing=swing lt, arc=(arcX+arcIncX / speed_factor, arcY+arcIncY/ speed_factor, arcZ+arcIncZ/ speed_factor),
 	arcIncr=arcIncr lt,
 	lightNum=lightNum lt}
@@ -107,12 +106,10 @@ modArc arc
 		
 -- set lights
 setLights :: [LightStruct] -> IO()
-setLights myList= do
-	mapM_ setLight myList
+setLights = mapM_ setLight
 
 setLight :: LightStruct -> IO()
-setLight lt = do
-	preservingMatrix $ do
+setLight lt = preservingMatrix $ do
 		translate $ trans lt
 		--print rotX
 		rotate rotX $ Vector3 1.0 0.0 (0.0::GLfloat)
@@ -124,8 +121,7 @@ setLight lt = do
 		(rotX, rotY, rotZ) = rot lt
 
 -- draw lights
-drawLights myList= do
-	mapM_ drawLight myList
+drawLights = mapM_ drawLight
 
 drawLight :: LightStruct -> IO()
 drawLight lt = do
@@ -148,10 +144,7 @@ normalToVertex (Normal3 x y z) = Vertex3 x y z
 	
 drawPlane w h = do
 	normal $ Normal3 0.0 0.0 (1.0::GLfloat)
-	mapM_ (\(x,y) -> preservingMatrix $ do
-		renderSection (x,y)
-		) $ myPoints w h
-
+	mapM_ (\(x,y) -> preservingMatrix $ renderSection (x,y)) $ myPoints w h
 
 		
 myPoints :: Float -> Float -> [(GLfloat,GLfloat)]
@@ -159,29 +152,27 @@ myPoints w h = (,) <$> [0..w] <*> [0..(h-1)]
 
 
 renderSection :: (GLfloat,GLfloat) -> IO ()	
-renderSection (y,x) = do
-	renderPrimitive TriangleStrip $ do
-		--print $ Vertex2 (d*x) (d*(y+1))
-		--print $ Vertex2 (d*x) (d*y)
-		vertex $ Vertex2 (d*x) ((d*(y+1.0))::GLfloat)
-		vertex $ Vertex2 (d*x) ((d*y)::GLfloat)
-		vertex $ Vertex2 (d*(x-1.0)) ((d*y)::GLfloat)
+renderSection (y,x) = 
+  renderPrimitive TriangleStrip $ do
+    vertex $ Vertex2 (d*x) (d*(y+1.0)::GLfloat)
+    vertex $ Vertex2 (d*x) (d*y::GLfloat)
+    vertex $ Vertex2 (d*(x-1.0)) (d*y::GLfloat)
 
-renderSection' (y,x) = do
-	renderPrimitive TriangleStrip $ do
-		vertex $ Vertex2 (1.0::GLfloat) (-1.0)
-		vertex $ Vertex2 (0.0) (1.0::GLfloat)
-		vertex $ Vertex2 (-1.0) ((-1.0)::GLfloat)
+renderSection' (y,x) =
+  renderPrimitive TriangleStrip $ do
+    vertex $ Vertex2 (1.0::GLfloat) (-1.0)
+    vertex $ Vertex2 0.0 (1.0::GLfloat)
+    vertex $ Vertex2 (-1.0) (-1.0::GLfloat)
 
 d = 1.0/16.0
 
 idle spin = do
 	angle <- get spin
-	spin $= (modAngle angle) + 0.1
+	spin $= modAngle angle + 0.1
 	postRedisplay Nothing
 
 modAngle a
-    | a > 360.0 = (-360.0)
+    | a > 360.0 = -360.0
     | a < (-360.0) = 360.0
     | otherwise = a	
 	
@@ -192,7 +183,7 @@ initfn = do
 	frustum (-1) 1 (-1) 1 2 (6::GLdouble) --glFrustum
 	matrixMode $= Modelview 0
 	
-	translate $ Vector3 0.0 0.0 ((-3.0)::GLfloat)
+	translate $ Vector3 0.0 0.0 (-3.0::GLfloat)
 	rotate 45.0 $ Vector3 1.0 0.0 (0.0::GLfloat)
 	
 	lighting $= Enabled
