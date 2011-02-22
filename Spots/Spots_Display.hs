@@ -127,7 +127,6 @@ setLights = mapM_ setLight
 setLight :: LightStruct -> IO()
 setLight lt = preservingMatrix $ do
 		translate $ trans lt
-		--print rotX
 		rotate rotX $ Vector3 1.0 0.0 (0.0::GLfloat)
 		rotate rotY $ Vector3 0.0 1.0 (0.0::GLfloat)
 		rotate rotZ $ Vector3 0.0 0.0 (1.0::GLfloat)

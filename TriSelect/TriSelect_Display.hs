@@ -64,8 +64,6 @@ renderAndLoadTriangles (object:[]) name = do
   renderTriangle object
 renderAndLoadTriangles (object:objectList) name = do
   loadName (Name name)
-  print (Name name)
-  print object
   renderTriangle object
   renderAndLoadTriangles objectList (name-1)
   
@@ -95,14 +93,12 @@ keyboardMouse :: TriObjectList -- ^List of TriObject to manipulate
 
 keyboardMouse objectList (MouseButton LeftButton) Down _ position = do
   myObjectList <- get objectList
-  print myObjectList
   selectedItem <- doSelect position myObjectList
   gen <- newStdGen
   objectList $= recolorTri gen myObjectList (convertNameToIndex (length myObjectList) selectedItem)
 
 keyboardMouse objectList (MouseButton MiddleButton) Down _ position = do
   myObjectList <- get objectList
-  print myObjectList
   selectedItem <- doSelect position myObjectList
   objectList $= growTri myObjectList (convertNameToIndex (length myObjectList) selectedItem)
 
@@ -156,7 +152,6 @@ doSelect :: Position -- ^ Current position of the cursor
             -> IO GLint -- ^ Name of the TriObject under the cursor
 doSelect pos@(Position x y) myObjectList= do
   maybeHitRecords <- getTriangleSelects pos myObjectList
-  print maybeHitRecords
   return (getHeadRecord maybeHitRecords)
 
 -- | Return the name of the first 'HitRecord' if more than one is generated.
