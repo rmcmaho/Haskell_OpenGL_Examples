@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK ignore-exports #-}
 module Main (
   main
   
@@ -22,7 +23,9 @@ import Random
 -- To use stateful objects (naughty)
 import Data.IORef
 
--- Main
+-- | Main method.
+-- Entry point of the program.
+main :: IO ()
 main = do
   (progname,_) <- getArgsAndInitialize
   initialDisplayMode $= [RGBMode, DoubleBuffered]
@@ -41,8 +44,10 @@ main = do
   --attachMenu RightButton (Menu [MenuEntry "Exit" exitSuccess])
   
   
--- Initialize triangle objects  
-initObjects :: StdGen -> Int -> [TriObject]
+-- | Initialize list of random TriObject
+initObjects :: StdGen -- ^ Random number generator
+               -> Int -- ^ Number of random TriObject to make
+               -> [TriObject] -- ^ List of randomly generated TriObject
 initObjects gen numObjects  
   | numObjects > 0 = randomObject gen1:initObjects gen2 (numObjects-1)
   | otherwise = []

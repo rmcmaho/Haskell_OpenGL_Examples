@@ -5,14 +5,17 @@ import Data.IORef
 
 import Random
 
+-- | Object representing a triangle with three vertecies and a color.
 data TriObject = TriObject {v1 :: Vertex2 GLfloat,
                             v2 :: Vertex2 GLfloat,
                             v3 :: Vertex2 GLfloat,
                             triColor :: Color3 GLfloat
                             } deriving (Show)
 
+-- | Utility type to make passing the list around easier
 type TriObjectList = IORef [TriObject]
 
+-- | Generates a random TriObject
 randomObject :: StdGen -> TriObject
 randomObject gen = TriObject (Vertex2 (x + v1_X - 25) (y + v1_Y - 25))
                    (Vertex2 (x + v2_X - 25) (y + v2_Y - 25))
