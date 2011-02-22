@@ -12,6 +12,9 @@ import Data.IORef
 
 import Spots_Display
 
+-- | Main method.
+-- Entry point of the program.
+main :: IO ()
 main = do
 	(progname,_) <- getArgsAndInitialize
 	initialDisplayMode $= [DoubleBuffered, RGBMode, WithDepthBuffer]

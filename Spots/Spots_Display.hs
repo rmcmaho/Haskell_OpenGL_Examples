@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK ignore-exports #-}
 module Spots_Display (
 
 display,
@@ -16,9 +17,8 @@ import LightRec
 
 -- useful function
 two_pi = 2*pi
-speed_factor = 10
 
--- list of spotlights
+-- | List of spotlights
 spotLights :: [LightStruct]
 spotLights = [LightStruct {amb=Color4 0.2 0.0 0.0 1.0, diff=Color4 0.8 0.0 0.0 1.0,
                            spec=Color4 0.4 0.0 0.0 1.0, pos=Vertex4 0.0 0.0 0.0 1.0,
@@ -45,7 +45,11 @@ spotLights = [LightStruct {amb=Color4 0.2 0.0 0.0 1.0, diff=Color4 0.8 0.0 0.0 1
                            arcIncr=(two_pi / 50.0, 0.0, two_pi / 100.0),
                            lightNum=2}]
              
--- display callback function
+-- |Display callback.
+display :: (HasGetter g)
+           => g GLfloat -- ^ Current rotation angle
+           -> LightList -- ^ List of spotlights
+           -> IO ()
 display spin lightList = do
 	clear [ColorBuffer,DepthBuffer]
 	preservingMatrix $ do
@@ -67,9 +71,11 @@ display spin lightList = do
 	swapBuffers
 	flush
 
--- init lights
-initLights = mapM_ initLight spotLights
+-- | Initializes each light source in the list
+initLights :: [LightStruct] -> IO ()
+initLights = mapM_ initLight
 
+-- | Initializes a light source
 initLight :: LightStruct -> IO()
 initLight lt = do
 	light (Light $ lightNum lt) $= Enabled
@@ -80,34 +86,44 @@ initLight lt = do
 	spotCutoff (Light $ lightNum lt) $= cutoff lt
 	attenuation (Light $ lightNum lt) $= atten lt
 
--- aim lights
-aimLights :: [LightStruct] -> [LightStruct]
+-- | Aims each light source in the list and returns a new list with aimed lights.
+aimLights :: [LightStruct] -- ^ Original list of lights
+             -> [LightStruct] -- ^ New, aimed list of lights
 aimLights = map rotateLight
 
+-- | Aims a light source and returns the new aimed light.
+rotateLight :: LightStruct -- ^ Original light
+               -> LightStruct -- ^ New, aimed light
 rotateLight lt = LightStruct {amb=amb lt, diff=diff lt,
 	spec=spec lt, pos=pos lt,
 	spotDir=spotDir lt, spotExp=spotExp lt,
 	cutoff=cutoff lt, atten=atten lt,
 	trans=trans lt, 
-	rot=(swingX * sin arcX, swingY * sin arcY, swingZ * sin arcZ),
-	swing=swing lt, arc=(arcX+arcIncX / speed_factor, arcY+arcIncY/ speed_factor, arcZ+arcIncZ/ speed_factor),
+	rot=newRot,
+	swing=swing lt,
+        arc= newArc,
 	arcIncr=arcIncr lt,
 	lightNum=lightNum lt}
 	where
-		(swingX, swingY, swingZ) = swing lt
-		(arcX, arcY, arcZ) = modArcTuple . arc $ lt
-		(arcIncX, arcIncY, arcIncZ) = arcIncr lt
-
-modArcTuple (arcX, arcY, arcZ) = (modArc arcX, modArc arcY, modArc arcZ)
-
-modArc arc
-	| arc > two_pi = arc - two_pi
-  | otherwise = arc
+          -- Set new swing angle
+          (swingX, swingY, swingZ) = swing lt
+          newRot = (swingX * sin arcX, swingY * sin arcY, swingZ * sin arcZ)
+          -- Set new arc angle
+          (arcX, arcY, arcZ) = modArcTuple . arc $ lt
+          (arcIncX, arcIncY, arcIncZ) = arcIncr lt
+          newArc = (arcX+arcIncX / speed_factor, arcY+arcIncY/ speed_factor, arcZ+arcIncZ/ speed_factor)
+          -- Utility stuff
+          speed_factor = 10
+          modArcTuple (arcX, arcY, arcZ) = (modArc arcX, modArc arcY, modArc arcZ)
+            where modArc arc
+                    | arc > two_pi = arc - two_pi
+                    | otherwise = arc
 		
--- set lights
+-- | Sets the lights to their current values
 setLights :: [LightStruct] -> IO()
 setLights = mapM_ setLight
 
+-- | Sets a light to its current value
 setLight :: LightStruct -> IO()
 setLight lt = preservingMatrix $ do
 		translate $ trans lt
@@ -120,9 +136,11 @@ setLight lt = preservingMatrix $ do
 	where
 		(rotX, rotY, rotZ) = rot lt
 
--- draw lights
+-- | Draws the lights
+drawLights :: [LightStruct] -> IO ()
 drawLights = mapM_ drawLight
 
+-- | Draws a light
 drawLight :: LightStruct -> IO()
 drawLight lt = do
 	lighting $= Disabled	
@@ -137,39 +155,43 @@ drawLight lt = do
 			vertex $ pos lt
 	lighting $= Enabled
 	where
-		(rotX, rotY, rotZ) = rot lt
+          (rotX, rotY, rotZ) = rot lt
+          normalToVertex (Normal3 x y z) = Vertex3 x y z	
 
-normalToVertex :: Normal3 GLfloat -> Vertex3 GLfloat
-normalToVertex (Normal3 x y z) = Vertex3 x y z	
-	
+-- | Draws a plane (dance floor) with the specified width and height.
+drawPlane :: Float -- ^ Width of the plane
+             -> Float -- ^ Height of the plane
+             -> IO ()
 drawPlane w h = do
 	normal $ Normal3 0.0 0.0 (1.0::GLfloat)
 	mapM_ (\(x,y) -> preservingMatrix $ renderSection (x,y)) $ myPoints w h
+        where
+          -- | Points of a dance floor.		
+          myPoints w h = (,) <$> [0..w] <*> [0..(h-1)]
 
-		
-myPoints :: Float -> Float -> [(GLfloat,GLfloat)]
-myPoints w h = (,) <$> [0..w] <*> [0..(h-1)]
-
-
+-- | Draw a section of the dance floor
 renderSection :: (GLfloat,GLfloat) -> IO ()	
 renderSection (y,x) = 
   renderPrimitive TriangleStrip $ do
     vertex $ Vertex2 (delta*x) (delta*(y+1.0)::GLfloat)
     vertex $ Vertex2 (delta*x) (delta*y::GLfloat)
     vertex $ Vertex2 (delta*(x-1.0)) (delta*y::GLfloat)
+    where delta = 1.0/16.0
 
-delta = 1.0/16.0
-
+-- | Idle callback. Increments the simulation.
+-- Runs whenever OpenGL has nothing else to do.
+idle :: (HasGetter g, Fractional a, Ord a, HasSetter g) => g a -> IO ()
 idle spin = do
 	angle <- get spin
 	spin $= modAngle angle + 0.1
 	postRedisplay Nothing
+        where modAngle a
+                | a > 360.0 = -360.0
+                | a < (-360.0) = 360.0
+                | otherwise = a	
 
-modAngle a
-    | a > 360.0 = -360.0
-    | a < (-360.0) = 360.0
-    | otherwise = a	
-	
+-- | Initializes various things for the program
+initfn :: IO ()
 initfn = do
 	depthFunc $= Just Less
 
@@ -193,12 +215,10 @@ initfn = do
 	materialEmission Front $= matEmission
 	materialShininess Front $= 10.0
 	
-	initLights
-	
-modelAmb :: Color4 GLfloat
-modelAmb = Color4 0.2 0.2 0.2 (1.0::GLfloat)
-
-matAmb = Color4 0.2 0.2 0.2 (1.0::GLfloat)
-matDiff = Color4 0.8 0.8 0.8 (1.0::GLfloat)
-matSpec = Color4 0.4 0.4 0.4 (1.0::GLfloat)
-matEmission = Color4 0.0 0.0 0.0 (1.0::GLfloat)
+	initLights spotLights
+        where
+          modelAmb = Color4 0.2 0.2 0.2 (1.0::GLfloat)
+          matAmb = Color4 0.2 0.2 0.2 (1.0::GLfloat)
+          matDiff = Color4 0.8 0.8 0.8 (1.0::GLfloat)
+          matSpec = Color4 0.4 0.4 0.4 (1.0::GLfloat)
+          matEmission = Color4 0.0 0.0 0.0 (1.0::GLfloat)
