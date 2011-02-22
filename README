@@ -21,13 +21,15 @@ On Mac/Unix
    $ cabal build
    $ ./dist/build/Spots/Spots
    $ ./dist/build/TriSelect/TriSelect
+   (etc)
 
 NOTE: On Mac (atleast), you should not do the following:
       
       $ runhaskell TriSelect.hs
       $ runhaskell Spots.hs
+      (etc)
 
-The program tends to just hang and stop responding. *shrug*
+The examples tend to just hang and stop responding. *shrug*
 
 On Windows
 
@@ -47,6 +49,11 @@ Example Descriptions
     Generates 10 random triangles with different sizes, shapes, and colors.
     Left click a triangle to change the color.
     Middle click a triangle to increase the size.
+
+(3) Cube
+
+    Renders a red 3D lighted cube. Simple but informative.
+    http://twoguysarguing.wordpress.com/2010/02/20/opengl-and-haskell/
 
 
 Documentation
