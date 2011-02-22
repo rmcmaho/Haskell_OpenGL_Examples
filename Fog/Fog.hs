@@ -19,6 +19,7 @@ main = do
   createWindow "Fog test"
 	
   displayCallback $= display
+  keyboardMouseCallback $= Just keyboardMouse
   initfn
 
   mainLoop

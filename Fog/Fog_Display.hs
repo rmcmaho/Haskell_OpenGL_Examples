@@ -2,7 +2,8 @@
 module Fog_Display (
 
 display,
-initfn
+initfn,
+keyboardMouse
 
 ) where
 
@@ -66,8 +67,6 @@ display = do
     rotate rotX $ Vector3 1.0 0.0 0.0
     scale 1.0 1.0 (10.0::GLfloat)
     
---    renderTube triangleList
-    
     callList cubeList
   
   swapBuffers
@@ -77,6 +76,18 @@ display = do
     rotY = -5.0 :: GLfloat
     rotX = 5.0 :: GLfloat
     cubeList = DisplayList 1
+
+keyboardMouse (Char 'd') Down _ _ = do
+  (Exp currentFog) <- get fogMode
+  fogMode $= Exp (currentFog * 1.10)
+  postRedisplay Nothing
+  
+keyboardMouse (Char 'D') Down _ _ = do
+  (Exp currentFog) <- get fogMode
+  fogMode $= Exp (currentFog / 1.10)
+  postRedisplay Nothing
+  
+keyboardMouse _ _ _ _ = return ()
 
 renderTube = renderPrimitive TriangleStrip $ mapM_ renderSection triangleList
 
