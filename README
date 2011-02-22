@@ -55,6 +55,12 @@ Example Descriptions
     Renders a red 3D lighted cube. Simple but informative.
     http://twoguysarguing.wordpress.com/2010/02/20/opengl-and-haskell/
 
+(4) Fog
+
+    Demonstration program exhibiting fog techniques.
+    'd' will increase fog density.
+    'D' will decrease fog density.
+
 
 Documentation
 ============================
