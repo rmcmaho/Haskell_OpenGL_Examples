@@ -22,6 +22,13 @@ On Mac/Unix
    $ ./dist/build/Spots/Spots
    $ ./dist/build/TriSelect/TriSelect
 
+NOTE: On Mac (atleast), you should not do the following:
+      
+      $ runhaskell TriSelect.hs
+      $ runhaskell Spots.hs
+
+The program tends to just hang and stop responding. *shrug*
+
 On Windows
 
    ?????
@@ -40,3 +47,17 @@ Example Descriptions
     Generates 10 random triangles with different sizes, shapes, and colors.
     Left click a triangle to change the color.
     Middle click a triangle to increase the size.
+
+
+Documentation
+============================
+
+Most code is ready for Haddock.
+http://www.haskell.org/haskellwiki/How_to_write_a_Haskell_program#Build_some_haddock_documentation
+
+Easiest way:
+	$ cabal haddock --executables --hyperlink-source
+
+That will generate documentation in "dist/doc/" for every executable with the source code colored and hyperlinked.
+     
+     
