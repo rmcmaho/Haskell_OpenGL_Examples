@@ -113,7 +113,7 @@ rotateLight lt = LightStruct {amb=amb lt, diff=diff lt,
           (arcIncX, arcIncY, arcIncZ) = arcIncr lt
           newArc = (arcX+arcIncX / speed_factor, arcY+arcIncY/ speed_factor, arcZ+arcIncZ/ speed_factor)
           -- Utility stuff
-          speed_factor = 10
+          speed_factor = 100
           modArcTuple (arcX, arcY, arcZ) = (modArc arcX, modArc arcY, modArc arcZ)
             where modArc arc
                     | arc > two_pi = arc - two_pi
@@ -163,26 +163,21 @@ drawPlane :: Float -- ^ Width of the plane
              -> IO ()
 drawPlane w h = do
 	normal $ Normal3 0.0 0.0 (1.0::GLfloat)
-	mapM_ (\(x,y) -> preservingMatrix $ renderSection (x,y)) $ myPoints w h
+        preservingMatrix $ mapM_ nextTriStrip [0..(h-1)]
         where
-          -- | Points of a dance floor.		
-          myPoints w h = (,) <$> [0..w] <*> [0..(h-1)]
+          nextTriStrip j = renderPrimitive TriangleStrip $ mapM_ (renderSection j) $ [0..w]
+          renderSection j i = do
+            vertex $ Vertex2 (delta*i) (delta*(j+1.0)::GLfloat)
+            vertex $ Vertex2 (delta*i) (delta*j::GLfloat)
+          delta = 1.0/16.0
 
--- | Draw a section of the dance floor
-renderSection :: (GLfloat,GLfloat) -> IO ()	
-renderSection (y,x) = 
-  renderPrimitive TriangleStrip $ do
-    vertex $ Vertex2 (delta*x) (delta*(y+1.0)::GLfloat)
-    vertex $ Vertex2 (delta*x) (delta*y::GLfloat)
-    vertex $ Vertex2 (delta*(x-1.0)) (delta*y::GLfloat)
-    where delta = 1.0/16.0
 
 -- | Idle callback. Increments the simulation.
 -- Runs whenever OpenGL has nothing else to do.
 idle :: (HasGetter g, Fractional a, Ord a, HasSetter g) => g a -> IO ()
 idle spin = do
 	angle <- get spin
-	spin $= modAngle angle + 0.1
+	spin $= modAngle angle + 0.01
 	postRedisplay Nothing
         where modAngle a
                 | a > 360.0 = -360.0
