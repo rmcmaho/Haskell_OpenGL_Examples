@@ -16,16 +16,17 @@ import Spots_Display
 -- Entry point of the program.
 main :: IO ()
 main = do
-	(progname,_) <- getArgsAndInitialize
-	initialDisplayMode $= [DoubleBuffered, RGBMode, WithDepthBuffer]
-	createWindow "GLUT spotlight swing"
+  
+  (progname,_) <- getArgsAndInitialize
+  initialDisplayMode $= [DoubleBuffered, RGBMode, WithDepthBuffer]
+  createWindow "GLUT spotlight swing"
 	
-	spin <- newIORef (0.0::GLfloat)
-	lightList <- newIORef spotLights
+  spin <- newIORef (0.0::GLfloat)
+  lightList <- newIORef spotLights
 	
-	displayCallback $= display spin lightList
-	idleCallback $= Just (idle spin)
+  displayCallback $= display spin lightList
+  idleCallback $= Just (idle spin)
 	
-	initfn
-	
-	mainLoop
+  initfn
+
+  mainLoop
