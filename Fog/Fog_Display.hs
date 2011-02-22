@@ -78,10 +78,9 @@ display = do
     rotX = 5.0 :: GLfloat
     cubeList = DisplayList 1
 
-renderTube = mapM_ renderSection
+renderTube = renderPrimitive TriangleStrip $ mapM_ renderSection triangleList
 
-renderSection triangleObject = 
-  renderPrimitive TriangleStrip $ do
+renderSection triangleObject = do
     normal $ n1 triangleObject
     vertex $ v1 triangleObject
     normal $ n2 triangleObject
@@ -118,7 +117,7 @@ initfn = do
   fogColor $= fog_color
   clearColor $= Color4 0.8 0.8 0.8 1.0
 
-  defineList cubeList Compile $ renderTube triangleList
+  defineList cubeList Compile $ renderTube
 
   matrixMode $= Projection
   perspective 45.0 1.0 1.0 200.0
