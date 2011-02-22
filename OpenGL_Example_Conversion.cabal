@@ -48,10 +48,10 @@ Cabal-version:       >=1.4
 
 Executable TriSelect
   -- .hs or .lhs file containing the Main module.
-  Main-is:  TriSelect.hs           
+  Main-is:  TriSelect.hs
   
   -- Packages needed in order to build this package.
-  Build-depends: base >= 4 && < 5, haskell98, OpenGL, GLUT    
+  Build-depends: base >= 4 && < 5, haskell98, OpenGL, GLUT
 
   HS-Source-Dirs: TriSelect
   
@@ -63,12 +63,22 @@ Executable TriSelect
   
 Executable Spots
   -- .hs or .lhs file containing the Main module.
-  Main-is:  Spots.hs           
+  Main-is:  Spots.hs
   
   -- Packages needed in order to build this package.
-  Build-depends: base >= 4 && < 5, haskell98, OpenGL, GLUT    
+  Build-depends: base >= 4 && < 5, haskell98, OpenGL, GLUT
 
   HS-Source-Dirs: Spots
 
-  Other-modules: Spots_Display, LightRec     
-  
+  Other-modules: Spots_Display, LightRec
+
+Executable Cube
+  -- .hs or .lhs file containing the Main module.
+  Main-is:  Cube.hs
+
+  -- Packages needed in order to build this package.
+  Build-depends: base >= 4 && < 5, haskell98, OpenGL, GLUT
+
+  HS-Source-Dirs: Cube
+
+  Other-modules: Cube_Display
