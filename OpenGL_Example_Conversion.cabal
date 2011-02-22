@@ -82,3 +82,14 @@ Executable Cube
   HS-Source-Dirs: Cube
 
   Other-modules: Cube_Display
+
+Executable Fog
+  -- .hs or .lhs file containing the Main module.
+  Main-is:  Fog.hs
+
+  -- Packages needed in order to build this package.
+  Build-depends: base >= 4 && < 5, haskell98, OpenGL, GLUT
+
+  HS-Source-Dirs: Fog
+
+  Other-modules: Fog_Display
