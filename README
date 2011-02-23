@@ -33,7 +33,8 @@ The examples tend to just hang and stop responding. *shrug*
 
 On Windows
 
-   ?????
+   > cabal configure
+   > cabal build
 
 
 Example Descriptions
@@ -60,6 +61,7 @@ Example Descriptions
     Demonstration program exhibiting fog techniques.
     'd' will increase fog density.
     'D' will decrease fog density.
+    Arrow keys will rotate the cylinder.
 
 
 Documentation
