@@ -17,9 +17,12 @@ main = do
   (progname,_) <- getArgsAndInitialize
   initialDisplayMode $= [DoubleBuffered, RGBMode, WithDepthBuffer]
   createWindow "Fog test"
-	
-  displayCallback $= display
-  keyboardMouseCallback $= Just keyboardMouse
+
+  io_rotX <- newIORef (5.0 :: GLfloat)
+  io_rotY <- newIORef (-5.0 :: GLfloat)
+
+  displayCallback $= display io_rotX io_rotY
+  keyboardMouseCallback $= Just (keyboardMouse io_rotX io_rotY)
   initfn
 
   mainLoop

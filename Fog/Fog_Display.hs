@@ -10,6 +10,8 @@ keyboardMouse
 import Graphics.Rendering.OpenGL
 import Graphics.UI.GLUT
 
+import Data.IORef
+
 data TriObject = TriObject {v1 :: Vertex3 GLfloat,
                             v2 :: Vertex3 GLfloat,
                             v3 :: Vertex3 GLfloat,
@@ -58,52 +60,74 @@ triangleList = [TriObject {v1 = Vertex3 1.0 0.0 (0.0 :: GLfloat),
 
 
 -- | Display callback.
-display :: IO ()
-display = do
+display :: IORef (GLfloat) -- ^ Current rotation about the x-axis
+           -> IORef (GLfloat) -- ^ Current rotation about the y-axis
+           -> IO ()
+display io_rotX io_rotY = do
   clear [ColorBuffer, DepthBuffer]
+  
+  rotY <- get io_rotY
+  rotX <- get io_rotX
+  
   preservingMatrix $ do
     translate $ zTranslate
     rotate rotY $ Vector3 0.0 1.0 0.0
     rotate rotX $ Vector3 1.0 0.0 0.0
     scale 1.0 1.0 (10.0::GLfloat)
-    
     callList cubeList
-  
   swapBuffers
   flush
   where
     zTranslate = Vector3 0.0 0.0 (-65.0::GLfloat)
-    rotY = -5.0 :: GLfloat
-    rotX = 5.0 :: GLfloat
     cubeList = DisplayList 1
 
-keyboardMouse (Char 'd') Down _ _ = do
+-- | Keyboard and mouse callback.
+-- Invoked when any keyboard or mouse button changes state (Up->Down or Down->Up)
+keyboardMouse :: IORef (GLfloat) -- ^ Current rotation about the x-axis
+                 -> IORef (GLfloat) -- ^ Current rotation about the y-axis
+                 -> Key -- ^Key activated (LeftButton, MiddleButton, etc)
+                 -> KeyState -- ^Up or Down
+                 -> Modifiers -- ^Modifier keys (Ctrl, Alt, Shift, etc)
+                 -> Position -- ^Position of the mouse on the screen
+                 -> IO () -- ^IO monad to wrap
+
+keyboardMouse _ _ (Char 'd') Down _ _ = do
   (Exp currentFog) <- get fogMode
   fogMode $= Exp (currentFog * 1.10)
   postRedisplay Nothing
   
-keyboardMouse (Char 'D') Down _ _ = do
+keyboardMouse _ _ (Char 'D') Down _ _ = do
   (Exp currentFog) <- get fogMode
   fogMode $= Exp (currentFog / 1.10)
   postRedisplay Nothing
   
-keyboardMouse _ _ _ _ = return ()
+keyboardMouse io_rotX _ (SpecialKey KeyUp) Down _ _ = do   
+  rotX <- get io_rotX
+  io_rotX $= rotX - 5.0
+  postRedisplay Nothing
+  
+keyboardMouse io_rotX _ (SpecialKey KeyDown) Down _ _ = do   
+  rotX <- get io_rotX
+  io_rotX $= rotX + 5.0
+  postRedisplay Nothing
 
-renderTube = renderPrimitive TriangleStrip $ mapM_ renderSection triangleList
+keyboardMouse _ io_rotY (SpecialKey KeyLeft) Down _ _ = do   
+  rotY <- get io_rotY
+  io_rotY $= rotY - 5.0
+  postRedisplay Nothing
 
-renderSection triangleObject = do
-    normal $ n1 triangleObject
-    vertex $ v1 triangleObject
-    normal $ n2 triangleObject
-    vertex $ v2 triangleObject
-    normal $ n3 triangleObject
-    vertex $ v3 triangleObject
+keyboardMouse _ io_rotY (SpecialKey KeyRight) Down _ _ = do   
+  rotY <- get io_rotY
+  io_rotY $= rotY + 5.0
+  postRedisplay Nothing
 
+keyboardMouse _ _ _ _ _ _ = return ()
+
+-- | Initializes various things for the program.
 initfn :: IO ()
 initfn = do
   frontFace $= CW
   depthFunc $= Just Lequal
-
   
   ambient light0 $= lightAmbient
   diffuse light0 $= lightDiffuse
@@ -149,4 +173,12 @@ initfn = do
     fogDensity = 0.02
     fog_color = Color4 0.8 0.8 0.8 1.0
     cubeList = DisplayList 1
+    renderTube = renderPrimitive TriangleStrip $ mapM_ renderSection triangleList
+    renderSection triangleObject = do
+      normal $ n1 triangleObject
+      vertex $ v1 triangleObject
+      normal $ n2 triangleObject
+      vertex $ v2 triangleObject
+      normal $ n3 triangleObject
+      vertex $ v3 triangleObject
     
