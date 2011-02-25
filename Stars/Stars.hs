@@ -8,6 +8,7 @@ import Graphics.UI.GLUT
 import Data.IORef
 
 import Stars_Display
+import Star_Rec
 
 -- | Main method.
 -- Entry point of the program.
@@ -18,7 +19,10 @@ main = do
   initialDisplayMode $= [getBufferMode args, RGBMode, WithDepthBuffer]
   createWindow "Stars"
   
-  initfn
+  starFlag <- newIORef (NormalStars)
+  starList <- newIORef ([])
+  
+  initfn starFlag starList
   
   reshapeCallback $= Just reshape
   keyboardMouseCallback $= Just keyboardMouse
