@@ -20,7 +20,7 @@ main = do
   
   initfn
   
-  reshapeCallback $= Just (reshape)
+  reshapeCallback $= Just reshape
   keyboardMouseCallback $= Just keyboardMouse
   displayCallback $= display
   visibilityCallback $= Just visible

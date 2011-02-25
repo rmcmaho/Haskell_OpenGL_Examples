@@ -103,4 +103,4 @@ Executable Stars
 
   HS-Source-Dirs: Stars
 
-  Other-modules: Stars_Display
+  Other-modules: Stars_Display, Star_Rec
