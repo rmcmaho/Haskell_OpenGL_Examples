@@ -19,14 +19,14 @@ main = do
   initialDisplayMode $= [getBufferMode args, RGBMode, WithDepthBuffer]
   createWindow "Stars"
   
-  starFlag <- newIORef (NormalStars)
-  starList <- newIORef ([])
+  starFlag <- newIORef NormalStars
+  starList <- newIORef []
   
   initfn starFlag starList
   
   reshapeCallback $= Just reshape
   keyboardMouseCallback $= Just keyboardMouse
-  displayCallback $= display
+  displayCallback $= display starList
   visibilityCallback $= Just visible
   
   mainLoop

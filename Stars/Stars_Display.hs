@@ -12,7 +12,12 @@ import Graphics.UI.GLUT
 import Data.IORef
 import Random
 
-import Star_Rec
+import qualified Star_Rec as Star
+
+maxWarp :: GLfloat
+maxWarp = 10.0
+speed :: GLfloat
+speed = 1.0
 
 reshape :: Size -> IO ()
 reshape (Size width height) = do
@@ -25,18 +30,70 @@ reshape (Size width height) = do
 keyboardMouse :: Key -> KeyState -> Modifiers -> Position -> IO ()
 keyboardMouse _ _ _ _ = return ()
 
-display :: IO ()
-display = return ()
+display :: IORef [Star.StarRec]
+           -> IO ()
+display starListRef = do
+  starList <- get starListRef
+  (_, winDimensions) <- get viewport
+  clear [ColorBuffer]
+  showStars winDimensions starList
+  swapBuffers
+  
+
+showStars :: Size
+             -> [Star.StarRec]
+             -> IO ()
+showStars winDimensions = mapM_ (showStar winDimensions)
+
+showStar :: Size
+            -> Star.StarRec
+            -> IO ()
+showStar (Size windW windH) star  
+  | x0 < 0.0 || x0 > numW || y0 < 0.0 || y0 > numH = return () -- skip this star if it is off the screen
+  | Star.starType star == Star.Streak = drawStreak
+  | Star.starType star == Star.Circle = drawCircle
+  | otherwise = return ()
+  where
+    numW = fromIntegral windW
+    numH = fromIntegral windH
+    -- 'br' means 'before rotation'
+    x0_br = (fst . Star.x $ star) * numW / (fst . Star.z $ star)
+    y0_br = (fst . Star.y $ star) * numH / (fst . Star.z $ star)
+    (x0, y0) = (\(xTmp, yTmp) -> (xTmp+(numW/2.0), yTmp+(numH/2.0))) . rotatePoint x0_br y0_br $ Star.rotation star
+    x1_br = (snd . Star.x $ star) * numW / (snd . Star.z $ star)
+    y1_br = (snd . Star.y $ star) * numH / (snd . Star.z $ star)
+    (x1, y1) = (\(xTmp, yTmp) -> (xTmp+(numW/2.0), yTmp+(numH/2.0))) . rotatePoint x1_br y1_br $ Star.rotation star
+    drawStreak
+      | abs (x0 - x1) < 1.0 && abs (y0 - y1) < 1.0 = do
+        color $ Color3 1.0 ((maxWarp - speed) / maxWarp) ((maxWarp - speed) / maxWarp)
+        renderPrimitive Points $ do
+          vertex $ Vertex2 x0 y0
+      | otherwise = do
+        color $ Color3 1.0 ((maxWarp - speed) / maxWarp) ((maxWarp - speed) / maxWarp)
+        renderPrimitive Lines $ do
+          vertex $ Vertex2 x0 y0
+          vertex $ Vertex2 x1 y1
+    drawCircle = return ()
+        
+
+rotatePoint :: GLfloat
+               -> GLfloat
+               -> GLfloat
+               -> (GLfloat, GLfloat)
+rotatePoint xIn yIn rotationAngle = (xOut, yOut)
+  where
+    xOut = xIn * cos rotationAngle - yIn * sin rotationAngle
+    yOut = yIn * cos rotationAngle + xIn * sin rotationAngle
 
 visible :: Visibility -> IO ()
 visible _ = return ()
 
 -- | Creates a new random star
 newStarList :: StdGen -- ^ Random number generator
-               -> StarFlag -- ^ Flag for stars
+               -> Star.StarFlag -- ^ Flag for stars
                -> GLint -- ^ Z-axis Offset
                -> GLint -- ^ Number of stars to make
-               -> [StarRec] -- ^ List of new stars
+               -> [Star.StarRec] -- ^ List of new stars
 newStarList gen flag starDepth numStars
   | numStars > 0 = newStar gen1 flag starDepth:newStarList gen2 flag starDepth (numStars - 1)
   | otherwise = []
@@ -44,44 +101,46 @@ newStarList gen flag starDepth numStars
     (gen1, gen2) = split gen
     
 newStar :: StdGen
-           -> StarFlag
+           -> Star.StarFlag
            -> GLint
-           -> StarRec
-newStar gen flag starDepth = StarRec {starType = getType randomType, x = (starX, starX),
-                                   y = (starY, starY), z = (starZ, starZ),
-                                   offsetX = newOffsetX, offsetY = newOffsetY,
-                                   offsetZ = newOffsetZ, rotation = 0.0}
+           -> Star.StarRec
+newStar gen flag starDepth = Star.StarRec {Star.starType = getType randomType, Star.x = (starX, starX),
+                                   Star.y = (starY, starY), Star.z = (starZ, starZ),
+                                   Star.offsetX = newOffsetX, Star.offsetY = newOffsetY,
+                                   Star.offsetZ = newOffsetZ, Star.rotation = 0.0}
                           where
                             -- Generate type
                             (randomType, g1) = randomR (0,4) gen
-                            getType :: Int -> StarType
-                            getType 0 = Circle
-                            getType _ = Streak
+                            getType :: Int -> Star.StarType
+                            getType 0 = Star.Circle
+                            getType _ = Star.Streak
                             -- Get position
-                            (starX, g2) = randomR (0 - (maxPos / 2.0), maxPos / 2.0) g1
-                            (starY, g3) = randomR (0 - (maxPos / 2), maxPos / 2) g2
+                            (starX, g2) = randomR (negate (maxPos / 2.0), maxPos / 2.0) g1
+                            (starY, g3) = randomR (negate (maxPos / 2), maxPos / 2) g2
                             (starZ, g4) = randomR (fromIntegral starDepth, maxPos + fromIntegral starDepth) g3
                             -- Get offsets
                             (newOffsetX, g5)
-                              | flag == WeirdStars = randomR (-50, 50) g4
+                              | flag == Star.WeirdStars = randomR (-50, 50) g4
                               | otherwise = (0.0, g4)
                             (newOffsetY, g6)
-                              | flag == WeirdStars = randomR (-50, 50) g5
+                              | flag == Star.WeirdStars = randomR (-50, 50) g5
                               | otherwise = (0.0, g5)
                             (newOffsetZ, _)
-                              | flag == WeirdStars = randomR (-12.5, 12.5) g6
+                              | flag == Star.WeirdStars = randomR (-12.5, 12.5) g6
                               | otherwise = (0.0, g6)
                             -- Constants
                             maxPos = 10000.0 :: GLfloat
                                    
 
-initfn :: IORef StarFlag
-          -> IORef [StarRec]
+initfn :: IORef Star.StarFlag
+          -> IORef [Star.StarRec]
           -> IO ()
 initfn flag starList = do
   randGen <- newStdGen
   localFlag <- get flag
   starList $= newStarList randGen localFlag offset maxStars
+  clearColor $= Color4 0.0 0.0 0.0 0.0
+  dither $= Disabled
   where
     offset = 100
     maxStars = 400
