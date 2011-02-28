@@ -104,13 +104,44 @@ visible _ _ = return ()
 idle :: IORef [Star.StarRec] -> IO ()
 idle starListRef = do
   starList <- get starListRef
-  starListRef $= updateStars ( moveStars starList)
+  randomGen <- newStdGen
+  --starListRef $= updateStars randomGen (moveStars starList)
+  starListRef $= moveStars starList
+  postRedisplay Nothing
 
 moveStars :: [Star.StarRec] -> [Star.StarRec]
-moveStars starList = starList
+moveStars starList = map moveStar starList
 
-updateStars :: [Star.StarRec] -> [Star.StarRec]
-updateStars starList = starList
+moveStar :: Star.StarRec -> Star.StarRec
+moveStar star = Star.StarRec {Star.starType = Star.starType star, Star.x = (newX0, newX1), 
+                              Star.y = (newY0, newY1), Star.z = (newZ0, newZ1),
+                              Star.offsetX = Star.offsetX star, Star.offsetY = Star.offsetY star, 
+                              Star.offsetR = Star.offsetR star, Star.rotation = newRotation}
+                where
+                  newX0 = (fst . Star.x $ star) + Star.offsetX star
+                  newY0 = (fst . Star.y $ star) + Star.offsetY star
+                  offset = speed * 60.0
+                  newZ0 = (fst . Star.z $ star) - offset
+                  newX1 = (fst . Star.x $ star)
+                  newY1 = (fst . Star.y $ star)
+                  newZ1 = (fst . Star.z $ star)
+                  tempRot = Star.rotation star + Star.offsetR star 
+                  newRotation
+                    | tempRot > maxAngles = 0.0
+                    | otherwise = tempRot
+
+updateStars :: StdGen -> [Star.StarRec] -> [Star.StarRec]
+updateStars gen (star:[]) = updateStar gen1 star:[]
+  where
+    (gen1, gen2) = split gen
+updateStars gen (star:starList) = updateStar gen1 star:updateStars gen2 starList
+  where
+    (gen1, gen2) = split gen
+
+updateStar gen star 
+  | z0 > speed || (z0 > 0.0 && speed < maxWarp) = newStar gen Star.NormalStars (floor maxPos)
+  | otherwise = star
+                where z0 = fst . Star.z $ star
 
 -- | Creates a new random star
 newStarList :: StdGen -- ^ Random number generator
@@ -131,7 +162,7 @@ newStar :: StdGen
 newStar gen flag starDepth = Star.StarRec {Star.starType = getType randomType, Star.x = (starX, starX),
                                    Star.y = (starY, starY), Star.z = (starZ, starZ),
                                    Star.offsetX = newOffsetX, Star.offsetY = newOffsetY,
-                                   Star.offsetZ = newOffsetZ, Star.rotation = 0.0}
+                                   Star.offsetR = newOffsetR, Star.rotation = 0.0}
                           where
                             -- Generate type
                             (randomType, g1) = randomR (0,4) gen
@@ -144,16 +175,19 @@ newStar gen flag starDepth = Star.StarRec {Star.starType = getType randomType, S
                             (starZ, g4) = randomR (fromIntegral starDepth, maxPos + fromIntegral starDepth) g3
                             -- Get offsets
                             (newOffsetX, g5)
-                              | flag == Star.WeirdStars = randomR (-50, 50) g4
+                              | flag == Star.WeirdStars = randomR offSetSeedX g4
                               | otherwise = (0.0, g4)
                             (newOffsetY, g6)
-                              | flag == Star.WeirdStars = randomR (-50, 50) g5
+                              | flag == Star.WeirdStars = randomR offSetSeedY g5
                               | otherwise = (0.0, g5)
-                            (newOffsetZ, _)
-                              | flag == Star.WeirdStars = randomR (-12.5, 12.5) g6
+                            (newOffsetR, _)
+                              | flag == Star.WeirdStars = randomR offSetSeedR g6
                               | otherwise = (0.0, g6)
                             -- Constants
                             maxPos = 10000.0 :: GLfloat
+                            offSetSeedX = (-5,5)
+                            offSetSeedY = (-5,5)
+                            offSetSeedR = (-1.25, 1.25)
                                    
 
 initfn :: IORef Star.StarFlag

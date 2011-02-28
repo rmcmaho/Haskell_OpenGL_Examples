@@ -8,7 +8,7 @@ data StarRec = StarRec { starType :: StarType,
                          z :: (GLfloat, GLfloat),
                          offsetX :: GLfloat,
                          offsetY :: GLfloat,
-                         offsetZ :: GLfloat,
+                         offsetR :: GLfloat,
                          rotation :: GLfloat}
 
 data StarType = Streak | Circle deriving (Eq)
