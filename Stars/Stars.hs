@@ -27,7 +27,7 @@ main = do
   reshapeCallback $= Just reshape
   keyboardMouseCallback $= Just keyboardMouse
   displayCallback $= display starList
-  visibilityCallback $= Just visible
+  visibilityCallback $= Just (visible starList)
   
   mainLoop
   where

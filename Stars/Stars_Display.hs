@@ -18,6 +18,10 @@ maxWarp :: GLfloat
 maxWarp = 10.0
 speed :: GLfloat
 speed = 1.0
+maxPos :: GLfloat
+maxPos = 10000.0
+maxAngles :: GLfloat
+maxAngles = 6000
 
 reshape :: Size -> IO ()
 reshape (Size width height) = do
@@ -73,7 +77,15 @@ showStar (Size windW windH) star
         renderPrimitive Lines $ do
           vertex $ Vertex2 x0 y0
           vertex $ Vertex2 x1 y1
-    drawCircle = return ()
+    drawCircle = do
+      color $ Color3 1.0 0.0 (0.0::GLfloat)
+      renderPrimitive Polygon $ mapM_ generateVertex [0..7]
+        where
+          width = maxPos / 10.0 / (fst . Star.z $ star) + 1.0
+          generateVertex i = vertex $ Vertex2 (newX i) (newY i)
+            where
+              newX i = x0 + width * cos (i * maxAngles / 8.0)
+              newY i = y0 + width * sin (i * maxAngles / 8.0)
         
 
 rotatePoint :: GLfloat
@@ -85,8 +97,20 @@ rotatePoint xIn yIn rotationAngle = (xOut, yOut)
     xOut = xIn * cos rotationAngle - yIn * sin rotationAngle
     yOut = yIn * cos rotationAngle + xIn * sin rotationAngle
 
-visible :: Visibility -> IO ()
-visible _ = return ()
+visible :: IORef [Star.StarRec] -> Visibility -> IO ()
+visible starListRef Visible = idleCallback $= Just (idle starListRef)
+visible _ _ = return ()
+
+idle :: IORef [Star.StarRec] -> IO ()
+idle starListRef = do
+  starList <- get starListRef
+  starListRef $= updateStars ( moveStars starList)
+
+moveStars :: [Star.StarRec] -> [Star.StarRec]
+moveStars starList = starList
+
+updateStars :: [Star.StarRec] -> [Star.StarRec]
+updateStars starList = starList
 
 -- | Creates a new random star
 newStarList :: StdGen -- ^ Random number generator
