@@ -25,9 +25,9 @@ main = do
   initfn starFlag starList
   
   reshapeCallback $= Just reshape
-  keyboardMouseCallback $= Just keyboardMouse
+  keyboardMouseCallback $= Just (keyboardMouse starFlag)
   displayCallback $= display starList
-  visibilityCallback $= Just (visible starList)
+  visibilityCallback $= Just (visible starFlag starList)
   
   mainLoop
   where

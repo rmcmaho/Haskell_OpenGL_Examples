@@ -31,8 +31,10 @@ reshape (Size width height) = do
   ortho2D (-0.5) (fromIntegral width+0.5) (-0.5) (fromIntegral height+0.5)
   matrixMode $= Modelview 0
 
-keyboardMouse :: Key -> KeyState -> Modifiers -> Position -> IO ()
-keyboardMouse _ _ _ _ = return ()
+keyboardMouse :: IORef Star.StarFlag -> Key -> KeyState -> Modifiers -> Position -> IO ()
+keboardMouse starFlagRef (MouseButton LeftButton) Down _ _ = starFlagRef $= Star.NormalStars
+keboardMouse starFlagRef (MouseButton MiddleButton) Down _ _ = starFlagRef $= Star.WeirdStars
+keyboardMouse _ _ _ _ _ = return ()
 
 display :: IORef [Star.StarRec]
            -> IO ()
@@ -53,11 +55,13 @@ showStar :: Size
             -> Star.StarRec
             -> IO ()
 showStar (Size windW windH) star  
+  | not (z0 > speed || (z0 > 0.0 && speed < maxWarp)) = return ()
   | x0 < 0.0 || x0 > numW || y0 < 0.0 || y0 > numH = return () -- skip this star if it is off the screen
   | Star.starType star == Star.Streak = drawStreak
   | Star.starType star == Star.Circle = drawCircle
   | otherwise = return ()
   where
+    z0 = fst . Star.z $ star
     numW = fromIntegral windW
     numH = fromIntegral windH
     -- 'br' means 'before rotation'
@@ -97,16 +101,17 @@ rotatePoint xIn yIn rotationAngle = (xOut, yOut)
     xOut = xIn * cos rotationAngle - yIn * sin rotationAngle
     yOut = yIn * cos rotationAngle + xIn * sin rotationAngle
 
-visible :: IORef [Star.StarRec] -> Visibility -> IO ()
-visible starListRef Visible = idleCallback $= Just (idle starListRef)
-visible _ _ = return ()
+visible :: IORef Star.StarFlag -> IORef [Star.StarRec] -> Visibility -> IO ()
+visible starFlagRef starListRef Visible = idleCallback $= Just (idle starFlagRef starListRef)
+visible _ _ NotVisible = return ()
 
-idle :: IORef [Star.StarRec] -> IO ()
-idle starListRef = do
+idle :: IORef Star.StarFlag -> IORef [Star.StarRec] -> IO ()
+idle starFlagRef starListRef = do
   starList <- get starListRef
+  starFlag <- get starFlagRef
   randomGen <- newStdGen
   (_, winDimensions) <- get viewport
-  starListRef $= updateStars winDimensions randomGen (moveStars starList)
+  starListRef $= updateStars winDimensions randomGen starFlag (moveStars starList)
   postRedisplay Nothing
 
 moveStars :: [Star.StarRec] -> [Star.StarRec]
@@ -130,16 +135,16 @@ moveStar star = Star.StarRec {Star.starType = Star.starType star, Star.x = (newX
                     | tempRot > maxAngles = 0.0
                     | otherwise = tempRot
 
-updateStars :: Size -> StdGen -> [Star.StarRec] -> [Star.StarRec]
-updateStars winDimensions gen (star:[]) = updateStar winDimensions gen1 star:[]
+updateStars :: Size -> StdGen -> Star.StarFlag-> [Star.StarRec] -> [Star.StarRec]
+updateStars winDimensions gen starFlag (star:[]) = updateStar winDimensions gen1 starFlag star:[]
   where
     (gen1, gen2) = split gen
-updateStars winDimensions gen (star:starList) = updateStar winDimensions gen1 star:updateStars winDimensions gen2 starList
+updateStars winDimensions gen starFlag (star:starList) = updateStar winDimensions gen1 starFlag star:updateStars winDimensions gen2 starFlag starList
   where
     (gen1, gen2) = split gen
 
-updateStar winDimensions gen star 
-  | z0 > speed || (z0 > 0.0 && speed < maxWarp) = if starPoint winDimensions star then newStar gen Star.NormalStars (floor maxPos) else star
+updateStar winDimensions gen starFlag star 
+  | z0 > speed || (z0 > 0.0 && speed < maxWarp) = if starPoint winDimensions star then newStar gen starFlag (floor maxPos) else star
   | otherwise = newStar gen Star.NormalStars (floor maxPos)
                 where z0 = fst . Star.z $ star
 
@@ -195,8 +200,8 @@ newStar gen flag starDepth = Star.StarRec {Star.starType = getType randomType, S
                               | otherwise = (0.0, g6)
                             -- Constants
                             maxPos = 10000.0 :: GLfloat
-                            offSetSeedX = (-50,50)
-                            offSetSeedY = (-50,50)
+                            offSetSeedX = (-50.0,50.0)
+                            offSetSeedY = (-50.0,50.0)
                             offSetSeedR = (-12.5, 12.5)
                                    
 
