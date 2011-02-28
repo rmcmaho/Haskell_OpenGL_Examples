@@ -17,7 +17,7 @@ import qualified Star_Rec as Star
 maxWarp :: GLfloat
 maxWarp = 10.0
 speed :: GLfloat
-speed = 1.0
+speed = 0.1
 maxPos :: GLfloat
 maxPos = 10000.0
 maxAngles :: GLfloat
@@ -105,8 +105,8 @@ idle :: IORef [Star.StarRec] -> IO ()
 idle starListRef = do
   starList <- get starListRef
   randomGen <- newStdGen
-  --starListRef $= updateStars randomGen (moveStars starList)
-  starListRef $= moveStars starList
+  (_, winDimensions) <- get viewport
+  starListRef $= updateStars winDimensions randomGen (moveStars starList)
   postRedisplay Nothing
 
 moveStars :: [Star.StarRec] -> [Star.StarRec]
@@ -130,18 +130,28 @@ moveStar star = Star.StarRec {Star.starType = Star.starType star, Star.x = (newX
                     | tempRot > maxAngles = 0.0
                     | otherwise = tempRot
 
-updateStars :: StdGen -> [Star.StarRec] -> [Star.StarRec]
-updateStars gen (star:[]) = updateStar gen1 star:[]
+updateStars :: Size -> StdGen -> [Star.StarRec] -> [Star.StarRec]
+updateStars winDimensions gen (star:[]) = updateStar winDimensions gen1 star:[]
   where
     (gen1, gen2) = split gen
-updateStars gen (star:starList) = updateStar gen1 star:updateStars gen2 starList
+updateStars winDimensions gen (star:starList) = updateStar winDimensions gen1 star:updateStars winDimensions gen2 starList
   where
     (gen1, gen2) = split gen
 
-updateStar gen star 
-  | z0 > speed || (z0 > 0.0 && speed < maxWarp) = newStar gen Star.NormalStars (floor maxPos)
-  | otherwise = star
+updateStar winDimensions gen star 
+  | z0 > speed || (z0 > 0.0 && speed < maxWarp) = if starPoint winDimensions star then newStar gen Star.NormalStars (floor maxPos) else star
+  | otherwise = newStar gen Star.NormalStars (floor maxPos)
                 where z0 = fst . Star.z $ star
+
+starPoint :: Size -> Star.StarRec -> Bool
+starPoint (Size windW windH) star = not (x0 >= 0.0 && x0 < numW && y0 >= 0.0 && y0 < numH)
+  where
+    numW = fromIntegral windW
+    numH = fromIntegral windH
+    x0_br = (fst . Star.x $ star) * numW / (fst . Star.z $ star)
+    y0_br = (fst . Star.y $ star) * numH / (fst . Star.z $ star)
+    (x0, y0) = (\(xTmp, yTmp) -> (xTmp+(numW/2.0), yTmp+(numH/2.0))) . rotatePoint x0_br y0_br $ Star.rotation star
+
 
 -- | Creates a new random star
 newStarList :: StdGen -- ^ Random number generator
@@ -185,9 +195,9 @@ newStar gen flag starDepth = Star.StarRec {Star.starType = getType randomType, S
                               | otherwise = (0.0, g6)
                             -- Constants
                             maxPos = 10000.0 :: GLfloat
-                            offSetSeedX = (-5,5)
-                            offSetSeedY = (-5,5)
-                            offSetSeedR = (-1.25, 1.25)
+                            offSetSeedX = (-50,50)
+                            offSetSeedY = (-50,50)
+                            offSetSeedR = (-12.5, 12.5)
                                    
 
 initfn :: IORef Star.StarFlag
