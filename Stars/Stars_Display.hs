@@ -23,6 +23,8 @@ maxPos = 10000.0
 maxAngles :: GLfloat
 maxAngles = 6000
 
+fromDegrees deg = deg * pi / 180 
+
 reshape :: Size -> IO ()
 reshape (Size width height) = do
   viewport $= (Position 0 0, Size width height)
@@ -32,8 +34,8 @@ reshape (Size width height) = do
   matrixMode $= Modelview 0
 
 keyboardMouse :: IORef Star.StarFlag -> Key -> KeyState -> Modifiers -> Position -> IO ()
-keboardMouse starFlagRef (MouseButton LeftButton) Down _ _ = starFlagRef $= Star.NormalStars
-keboardMouse starFlagRef (MouseButton MiddleButton) Down _ _ = starFlagRef $= Star.WeirdStars
+keyboardMouse starFlagRef (MouseButton LeftButton) Down _ _ = starFlagRef $= Star.NormalStars
+keyboardMouse starFlagRef (MouseButton MiddleButton) Down _ _ = starFlagRef $= Star.WeirdStars
 keyboardMouse _ _ _ _ _ = return ()
 
 display :: IORef [Star.StarRec]
@@ -145,7 +147,7 @@ updateStars winDimensions gen starFlag (star:starList) = updateStar winDimension
 
 updateStar winDimensions gen starFlag star 
   | z0 > speed || (z0 > 0.0 && speed < maxWarp) = if starPoint winDimensions star then newStar gen starFlag (floor maxPos) else star
-  | otherwise = newStar gen Star.NormalStars (floor maxPos)
+  | otherwise = newStar gen starFlag (floor maxPos)
                 where z0 = fst . Star.z $ star
 
 starPoint :: Size -> Star.StarRec -> Bool
@@ -188,21 +190,21 @@ newStar gen flag starDepth = Star.StarRec {Star.starType = getType randomType, S
                             (starX, g2) = randomR (negate (maxPos / 2.0), maxPos / 2.0) g1
                             (starY, g3) = randomR (negate (maxPos / 2), maxPos / 2) g2
                             (starZ, g4) = randomR (fromIntegral starDepth, maxPos + fromIntegral starDepth) g3
+                            isWeird = (\(rand,_) -> rand == 0) . randomR (0, 25::Int) $ g4
                             -- Get offsets
                             (newOffsetX, g5)
-                              | flag == Star.WeirdStars = randomR offSetSeedX g4
+                              | flag == Star.WeirdStars && isWeird= randomR offSetSeedX g4
                               | otherwise = (0.0, g4)
                             (newOffsetY, g6)
-                              | flag == Star.WeirdStars = randomR offSetSeedY g5
+                              | flag == Star.WeirdStars && isWeird= randomR offSetSeedY g5
                               | otherwise = (0.0, g5)
                             (newOffsetR, _)
-                              | flag == Star.WeirdStars = randomR offSetSeedR g6
+                              | flag == Star.WeirdStars && isWeird= randomR offSetSeedR g6
                               | otherwise = (0.0, g6)
                             -- Constants
-                            maxPos = 10000.0 :: GLfloat
-                            offSetSeedX = (-50.0,50.0)
-                            offSetSeedY = (-50.0,50.0)
-                            offSetSeedR = (-12.5, 12.5)
+                            offSetSeedX = (-5.0,5.0)
+                            offSetSeedY = (-5.0,5.0)
+                            offSetSeedR = (fromDegrees (-0.0125), fromDegrees 0.0125)
                                    
 
 initfn :: IORef Star.StarFlag
